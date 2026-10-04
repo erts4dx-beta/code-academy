@@ -1,0 +1,940 @@
+@id php
+@name PHP
+@badge PHP
+@color #777bb4
+@difficulty 2
+@category 웹
+@year 1995
+@uses 웹 백엔드 · WordPress · Laravel · 쇼핑몰/CMS
+@desc 전 세계 웹사이트의 상당수(WordPress 포함)를 구동하는 서버 사이드 언어입니다. 배우기 쉽고 호스팅이 저렴하며, PHP 8 이후 타입 시스템과 성능이 크게 발전했습니다.
+
+=== 입문 | hello | PHP 시작하기
+PHP(PHP: Hypertext Preprocessor)는 웹 서버에서 실행되어 HTML을 만들어 내는 언어입니다. WordPress, Wikipedia(MediaWiki), Laravel 프레임워크 등이 PHP로 만들어졌습니다.
+
+## 실행 방법
+- 명령줄: `php hello.php`
+- 내장 웹 서버: `php -S localhost:8000` 후 브라우저에서 접속
+- 설치 없이: 3v4l.org, onlinephp.io
+
+## 기본 문법
+- PHP 코드는 `<?php` 로 시작합니다. 파일 전체가 PHP라면 닫는 태그 `?>` 는 생략하는 것이 관례입니다.
+- 문장 끝에 세미콜론 `;` 필수
+- 변수는 `$` 로 시작: `$name`
+- 출력: `echo`, `print`, 디버깅용 `var_dump()`, `print_r()`
+- 큰따옴표 문자열 안에서는 변수가 치환되고, 작은따옴표는 그대로 출력됩니다.
+--- code
+<?php
+echo "Hello, World!\n";
+
+$name = "길동";
+$year = 2026;
+echo "안녕하세요, {$name}님! 올해는 {$year}년입니다.\n";
+echo '작은따옴표: $name 은 치환되지 않음' . "\n";
+echo "이어 붙이기: " . $name . "\n";   // . 은 문자열 연결 연산자
+
+var_dump($year);        // int(2026)
+var_dump(3.14, true);   // float(3.14) bool(true)
+--- exercise
+변수 `$product`, `$price`, `$qty` 를 만들고 "상품: 노트, 단가: 1500원, 수량: 4, 합계: 6000원" 형태로 출력하세요. `number_format()` 으로 천 단위 쉼표를 넣어 보세요.
+--- solution
+<?php
+$product = "노트";
+$price = 1500;
+$qty = 4;
+$total = $price * $qty;
+echo "상품: {$product}, 단가: " . number_format($price) . "원, 수량: {$qty}, 합계: " . number_format($total) . "원\n";
+--- quiz
+? PHP에서 변수 이름은 어떻게 시작하나요?
+- `@`
++ `$`
+- `#`
+- `var`
+! 모든 PHP 변수는 $로 시작합니다.
+? PHP에서 문자열을 연결하는 연산자는?
+- `+`
++ `.`
+- `&`
+- `++`
+! "a" . "b" 는 "ab"가 됩니다. +는 숫자 덧셈입니다.
+
+=== 입문 | types | 자료형과 연산자
+## 자료형
+`int`, `float`, `string`, `bool`, `array`, `null`, `object`. PHP는 동적 타입 언어로, 값에 따라 타입이 정해집니다. `gettype()`, `var_dump()` 로 확인합니다.
+
+## 비교: == vs ===
+- `==` 느슨한 비교: 타입 변환 후 비교 (`"10" == 10` → true)
+- `===` 엄격한 비교: 타입과 값 모두 비교 (`"10" === 10` → false)
+- **항상 `===` 사용을 권장**합니다.
+
+## 유용한 연산자
+- null 병합 `??`: `$_GET['page'] ?? 1`
+- 우주선 `<=>`: 작으면 -1, 같으면 0, 크면 1 (정렬에 사용)
+- 거듭제곱 `**`, 정수 나눗셈 `intdiv()`, 나머지 `%`
+- 형 변환: `(int)"42"`, `(string)3.5`, `intval()`
+--- code
+<?php
+$i = 42;
+$f = 3.14;
+$s = "hello";
+$b = false;
+$n = null;
+echo gettype($i), " ", gettype($f), " ", gettype($s), " ", gettype($b), " ", gettype($n), "\n";
+
+var_dump("10" == 10);    // bool(true)  — 느슨한 비교
+var_dump("10" === 10);   // bool(false) — 엄격한 비교
+var_dump(0 == "a");      // bool(false) — PHP 8부터 변경됨 (7에서는 true!)
+
+echo 7 / 2, "\n";            // 3.5
+echo intdiv(7, 2), "\n";     // 3
+echo 7 % 3, "\n";            // 1
+echo 2 ** 10, "\n";          // 1024
+
+echo 1 <=> 2, " ", 2 <=> 2, " ", 3 <=> 2, "\n";   // -1 0 1
+
+$config = ['theme' => 'dark'];
+echo $config['lang'] ?? 'ko', "\n";          // 키가 없으면 기본값
+
+echo (int)"123abc", "\n";    // 123
+echo (int)"abc", "\n";       // 0
+var_dump((bool)"0", (bool)"", (bool)"false");   // false false true
+--- exercise
+`$a = "5"`, `$b = 5`, `$c = 5.0` 에 대해 `==` 와 `===` 비교 결과를 `var_dump` 로 모두 확인하고, 정수 17을 5로 나눈 몫과 나머지를 출력하세요.
+--- solution
+<?php
+$a = "5"; $b = 5; $c = 5.0;
+var_dump($a == $b, $a === $b);   // true false
+var_dump($b == $c, $b === $c);   // true false (int vs float)
+echo "몫: " . intdiv(17, 5) . ", 나머지: " . (17 % 5) . "\n";   // 3, 2
+--- quiz
+? `"10" === 10` 의 결과는?
+- true
++ false
+- 오류
+- null
+! ===는 타입까지 비교하므로 문자열과 정수는 다릅니다.
+? `$x = $arr['key'] ?? 'default';` 에서 `??` 의 역할은?
++ 왼쪽 값이 존재하지 않거나 null이면 오른쪽 값을 사용
+- 두 값을 비교
+- 오류를 발생시킴
+- 배열을 합침
+! null 병합 연산자로, 정의되지 않은 키에 접근해도 경고가 나지 않습니다.
+
+=== 입문 | control | 조건문과 반복문
+## 조건문
+- `if / elseif / else`
+- `switch` (느슨한 비교, break 필요)
+- **`match` (PHP 8)**: 엄격한 비교, 값을 반환하는 식, break 불필요 — switch보다 권장
+
+## 반복문
+- `for ($i = 0; $i < 10; $i++)`
+- `while`, `do-while`
+- **`foreach`**: 배열 순회의 기본 — `foreach ($arr as $value)`, `foreach ($arr as $key => $value)`
+- `break`, `continue`
+--- code
+<?php
+$score = 85;
+if ($score >= 90) {
+    $grade = "A";
+} elseif ($score >= 80) {
+    $grade = "B";
+} else {
+    $grade = "C";
+}
+echo "학점: $grade\n";
+
+$status = 404;
+$message = match ($status) {
+    200, 201 => "성공",
+    404 => "찾을 수 없음",
+    500 => "서버 오류",
+    default => "알 수 없음",
+};
+echo $message, "\n";
+
+$level = match (true) {
+    $score >= 90 => "우수",
+    $score >= 70 => "보통",
+    default => "노력 필요",
+};
+echo $level, "\n";
+
+for ($i = 1; $i <= 5; $i++) {
+    if ($i === 3) continue;
+    echo $i, " ";
+}
+echo "\n";
+
+$fruits = ["사과", "바나나", "포도"];
+foreach ($fruits as $index => $fruit) {
+    echo "$index: $fruit\n";
+}
+
+$n = 1;
+while ($n < 100) {
+    $n *= 3;
+}
+echo $n, "\n";   // 243
+--- exercise
+1부터 9까지 구구단 중 짝수 단(2, 4, 6, 8단)만 중첩 `for` 문으로 출력하세요. 각 단 사이에는 빈 줄을 넣으세요.
+--- solution
+<?php
+for ($dan = 2; $dan <= 9; $dan += 2) {
+    echo "== {$dan}단 ==\n";
+    for ($i = 1; $i <= 9; $i++) {
+        echo "$dan x $i = " . ($dan * $i) . "\n";
+    }
+    echo "\n";
+}
+--- quiz
+? PHP 8의 `match` 와 `switch` 의 차이로 옳은 것은?
++ match는 엄격한 비교(===)를 하고 값을 반환하는 식이다
+- match는 break를 반드시 써야 한다
+- switch가 더 최신 문법이다
+- match는 문자열을 비교할 수 없다
+! match는 일치하는 경우가 없고 default도 없으면 UnhandledMatchError를 던집니다.
+? 배열의 키와 값을 함께 순회하는 문법은?
+- `for ($arr as $k, $v)`
++ `foreach ($arr as $k => $v)`
+- `foreach ($k, $v in $arr)`
+- `each ($arr)`
+! foreach는 PHP 배열 순회의 가장 일반적인 방법입니다.
+
+=== 초급 | arrays | 배열 (인덱스·연관 배열)
+PHP의 배열은 **순서 있는 맵**입니다. 하나의 타입으로 리스트, 딕셔너리, 스택, 큐 역할을 모두 합니다.
+
+## 생성
+- 인덱스 배열: `$nums = [1, 2, 3];`
+- 연관 배열: `$user = ['name' => '길동', 'age' => 30];`
+- 추가: `$nums[] = 4;`
+
+## 주요 함수
+- `count`, `in_array`, `array_key_exists`, `array_search`
+- `array_push/pop`, `array_shift/unshift`, `array_slice`, `array_merge`
+- 함수형: `array_map`, `array_filter`, `array_reduce`
+- 정렬: `sort`/`rsort`(값), `asort`/`arsort`(값, 키 유지), `ksort`(키), `usort`(사용자 비교)
+- 구조 분해: `[$a, $b] = [1, 2];`, `['name' => $n] = $user;`
+- 스프레드: `[...$a, ...$b]`
+--- code
+<?php
+$nums = [5, 3, 8, 1];
+$nums[] = 9;
+echo count($nums), "\n";              // 5
+sort($nums);
+echo implode(", ", $nums), "\n";      // 1, 3, 5, 8, 9
+
+$user = ['name' => '길동', 'age' => 30, 'city' => '서울'];
+$user['email'] = 'gd@example.com';
+foreach ($user as $key => $value) {
+    echo "$key: $value\n";
+}
+var_dump(array_key_exists('age', $user), in_array('서울', $user));
+
+$squares = array_map(fn($n) => $n * $n, $nums);
+$evens = array_filter($nums, fn($n) => $n % 2 === 0);
+$sum = array_reduce($nums, fn($carry, $n) => $carry + $n, 0);
+echo implode(" ", $squares), " | ", implode(" ", $evens), " | $sum\n";
+
+$products = [
+    ['name' => '키보드', 'price' => 45000],
+    ['name' => '마우스', 'price' => 25000],
+    ['name' => '모니터', 'price' => 230000],
+];
+usort($products, fn($a, $b) => $a['price'] <=> $b['price']);
+echo implode(", ", array_column($products, 'name')), "\n";   // 마우스, 키보드, 모니터
+
+['name' => $name, 'city' => $city] = $user;
+echo "$name / $city\n";
+
+$merged = [...[1, 2], ...[3, 4]];
+print_r($merged);
+--- exercise
+학생 점수 연관 배열 `['철수' => 85, '영희' => 92, '민수' => 78, '지우' => 95]` 에서 (1) 평균을 소수점 1자리로, (2) 점수 내림차순으로 정렬해 "이름: 점수" 출력, (3) 90점 이상 학생 이름 목록을 출력하세요.
+--- solution
+<?php
+$scores = ['철수' => 85, '영희' => 92, '민수' => 78, '지우' => 95];
+printf("평균: %.1f\n", array_sum($scores) / count($scores));   // 87.5
+
+arsort($scores);   // 값 기준 내림차순, 키 유지
+foreach ($scores as $name => $score) {
+    echo "$name: $score\n";
+}
+
+$top = array_keys(array_filter($scores, fn($s) => $s >= 90));
+echo implode(", ", $top), "\n";   // 지우, 영희
+--- quiz
+? 연관 배열을 **값 기준**으로 정렬하면서 키를 유지하는 함수는?
+- `sort`
++ `asort`
+- `ksort`
+- `usort`
+! sort는 키를 0부터 다시 매기고, ksort는 키 기준으로 정렬합니다.
+? `$arr[] = 10;` 의 의미는?
++ 배열 끝에 10을 추가
+- 배열을 10으로 초기화
+- 10번 인덱스에 접근
+- 문법 오류
+! array_push($arr, 10) 과 같습니다.
+
+=== 초급 | functions | 함수와 타입 선언
+## 함수 정의
+- `function add(int $a, int $b): int { return $a + $b; }`
+- 기본값: `function greet(string $name = "손님")`
+- **이름 있는 인자 (PHP 8)**: `greet(name: "길동")`
+- 가변 인자: `function sum(int ...$nums)`
+- nullable 타입: `?string`, 유니온 타입: `int|float`
+
+## strict_types
+파일 맨 위에 `declare(strict_types=1);` 를 쓰면 타입 강제 변환을 막아 `add("5", 3)` 같은 호출이 TypeError가 됩니다. 현대 PHP 프로젝트의 표준입니다.
+
+## 익명 함수와 화살표 함수
+- 클로저: `function($x) use ($factor) { return $x * $factor; }` — 외부 변수는 `use` 로 가져옴
+- 화살표 함수: `fn($x) => $x * $factor` — 외부 변수를 자동으로 캡처
+--- code
+<?php
+declare(strict_types=1);
+
+function add(int $a, int $b): int
+{
+    return $a + $b;
+}
+
+function greet(string $name = "방문자", string $greeting = "안녕하세요"): string
+{
+    return "$greeting, {$name}님!";
+}
+
+function average(float ...$nums): ?float
+{
+    return count($nums) ? array_sum($nums) / count($nums) : null;
+}
+
+function formatPrice(int|float $price): string
+{
+    return number_format($price) . "원";
+}
+
+echo add(3, 5), "\n";
+echo greet(), "\n";
+echo greet(greeting: "반가워요", name: "영희"), "\n";   // 이름 있는 인자
+echo average(80, 90, 100), "\n";
+var_dump(average());              // NULL
+echo formatPrice(1234567), "\n";
+
+$factor = 3;
+$triple = fn(int $x): int => $x * $factor;            // 자동 캡처
+$multiply = function (int $x) use ($factor): int {    // use로 캡처
+    return $x * $factor;
+};
+echo $triple(5), " ", $multiply(7), "\n";
+
+function makeCounter(): Closure
+{
+    $count = 0;
+    return function () use (&$count): int {           // 참조로 캡처
+        return ++$count;
+    };
+}
+$counter = makeCounter();
+$counter(); $counter();
+echo $counter(), "\n";            // 3
+
+try {
+    echo add("5", 3);
+} catch (TypeError $e) {
+    echo "TypeError: strict_types 때문에 문자열 전달 불가\n";
+}
+--- exercise
+`declare(strict_types=1)` 을 사용해 `function bmi(float $weightKg, float $heightCm): string` 을 작성하세요. BMI = 체중 / (키(m)^2) 이며, 18.5 미만 "저체중", 23 미만 "정상", 25 미만 "과체중", 그 이상 "비만"(한국 기준)을 `match(true)` 로 반환하고 BMI 값(소수 1자리)도 함께 표시합니다.
+--- solution
+<?php
+declare(strict_types=1);
+
+function bmi(float $weightKg, float $heightCm): string
+{
+    $h = $heightCm / 100;
+    $value = $weightKg / ($h ** 2);
+    $label = match (true) {
+        $value < 18.5 => "저체중",
+        $value < 23 => "정상",
+        $value < 25 => "과체중",
+        default => "비만",
+    };
+    return sprintf("BMI %.1f (%s)", $value, $label);
+}
+
+echo bmi(70, 175), "\n";   // BMI 22.9 (정상)
+echo bmi(heightCm: 160, weightKg: 70), "\n";   // BMI 27.3 (비만)
+--- quiz
+? 화살표 함수 `fn($x) => $x * $y` 에서 외부 변수 `$y` 는?
++ 자동으로 값이 캡처된다
+- use ($y) 를 반드시 써야 한다
+- 전역 변수로만 접근 가능하다
+- 사용할 수 없다
+! 일반 익명 함수(function)는 use가 필요하지만 fn은 자동 캡처합니다.
+? `declare(strict_types=1);` 의 효과는?
+- 모든 변수를 상수로 만든다
++ 스칼라 타입 선언에 대해 자동 형 변환을 막는다
+- 경고 메시지를 숨긴다
+- 실행 속도를 2배로 만든다
+! 타입이 맞지 않으면 TypeError가 발생합니다.
+
+=== 초급 | web-forms | 웹 요청과 폼 처리, 보안 기초
+PHP가 웹에서 강한 이유는 HTTP 요청 정보를 **슈퍼글로벌** 변수로 바로 쓸 수 있기 때문입니다.
+
+## 슈퍼글로벌
+- `$_GET`: URL 쿼리(`?page=2`), `$_POST`: 폼 전송 데이터
+- `$_SERVER`: 요청 메서드, URI 등, `$_SESSION`: 세션, `$_COOKIE`: 쿠키
+- `$_FILES`: 업로드 파일
+
+## 반드시 지켜야 할 보안 규칙
+1. **출력할 때 이스케이프**: `htmlspecialchars($s, ENT_QUOTES, 'UTF-8')` → XSS 방지
+2. **입력 검증**: `filter_var($email, FILTER_VALIDATE_EMAIL)`, `filter_var($n, FILTER_VALIDATE_INT)`
+3. **SQL은 항상 Prepared Statement** (고급 레슨에서 다룸)
+4. 비밀번호는 `password_hash()` / `password_verify()` — 절대 평문 저장 금지
+5. 상태 변경 폼에는 CSRF 토큰 사용
+
+> 아래 예제는 웹 요청 없이도 실행되도록 `$_POST` 를 직접 채워 흉내 냅니다. 실제로는 `php -S localhost:8000` 으로 서버를 띄우고 HTML 폼을 전송해 보세요.
+--- code
+<?php
+declare(strict_types=1);
+
+// 실제 서버에서는 브라우저가 보낸 값이 들어옵니다. 여기서는 흉내.
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_POST = ['name' => '<script>alert("해킹")</script>', 'email' => 'gildong@example', 'age' => '30'];
+
+function e(string $s): string
+{
+    return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+}
+
+$errors = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = trim($_POST['name'] ?? '');
+    $email = filter_var($_POST['email'] ?? '', FILTER_VALIDATE_EMAIL);
+    $age = filter_var($_POST['age'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 150]]);
+
+    if ($name === '') $errors[] = '이름을 입력하세요';
+    if ($email === false) $errors[] = '이메일 형식이 올바르지 않습니다';
+    if ($age === false) $errors[] = '나이는 1~150 사이 정수여야 합니다';
+
+    echo "<p>안녕하세요, " . e($name) . "님</p>\n";   // 스크립트가 무력화됨
+    foreach ($errors as $err) {
+        echo "<li>" . e($err) . "</li>\n";
+    }
+}
+
+$hash = password_hash('my-secret-pw', PASSWORD_DEFAULT);
+var_dump(password_verify('my-secret-pw', $hash));   // true
+var_dump(password_verify('wrong', $hash));          // false
+
+$csrfToken = bin2hex(random_bytes(16));             // 세션에 저장해 폼과 비교
+echo strlen($csrfToken), "\n";                      // 32
+?>
+<!-- 실제 폼 예시 -->
+<form method="post" action="register.php">
+  <input name="name"> <input name="email" type="email"> <input name="age" type="number">
+  <button>가입</button>
+</form>
+--- exercise
+`$_GET` 을 `['q' => '<b>php</b>', 'page' => 'abc']` 로 흉내 내고, 검색어는 이스케이프해서 "검색어: ..." 로 출력하고, page는 정수 검증에 실패하면 1을 기본값으로 사용해 출력하세요.
+--- solution
+<?php
+$_GET = ['q' => '<b>php</b>', 'page' => 'abc'];
+
+$q = htmlspecialchars($_GET['q'] ?? '', ENT_QUOTES, 'UTF-8');
+$page = filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT, ['options' => ['default' => 1, 'min_range' => 1]]);
+
+echo "검색어: $q\n";     // 검색어: &lt;b&gt;php&lt;/b&gt;
+echo "페이지: $page\n";  // 페이지: 1
+--- quiz
+? 사용자 입력을 HTML에 출력할 때 XSS를 막기 위해 사용하는 함수는?
+- `strip_slashes`
++ `htmlspecialchars`
+- `md5`
+- `urlencode`
+! <, >, &, 따옴표를 HTML 엔티티로 바꿔 스크립트 실행을 막습니다.
+? 비밀번호 저장 방법으로 올바른 것은?
+- md5($pw) 로 저장
+- 평문으로 저장하고 DB 접근 제한
++ password_hash() 로 저장하고 password_verify() 로 확인
+- base64_encode($pw) 로 저장
+! password_hash는 솔트가 포함된 느린 해시(bcrypt/argon2)를 사용합니다.
+
+=== 중급 | oop | 클래스와 객체지향
+## 클래스 기본
+- 속성과 메서드, 접근 제어자 `public / protected / private`
+- **생성자 속성 승격 (PHP 8)**: `public function __construct(private string $name) {}` — 선언과 대입을 한 번에
+- `readonly` 속성 (PHP 8.1): 한 번만 대입 가능
+- `static` 멤버: `self::$count`, `static::create()`
+
+## 상속과 추상화
+- `extends` 상속(단일), `parent::__construct()`
+- `abstract class`, `interface`, `implements`
+- `trait`: 여러 클래스에 코드 재사용 (`use TraitName;`)
+
+## enum (PHP 8.1)
+`enum Status: string { case Active = 'active'; }` — 백킹 값, 메서드, `from()`/`tryFrom()`.
+--- code
+<?php
+declare(strict_types=1);
+
+interface Shape
+{
+    public function area(): float;
+}
+
+abstract class BaseShape implements Shape
+{
+    public function describe(): string
+    {
+        return static::class . " 넓이: " . round($this->area(), 2);
+    }
+}
+
+final class Circle extends BaseShape
+{
+    public function __construct(private readonly float $radius) {}
+    public function area(): float { return M_PI * $this->radius ** 2; }
+}
+
+final class Rect extends BaseShape
+{
+    public function __construct(private float $w, private float $h) {}
+    public function area(): float { return $this->w * $this->h; }
+}
+
+trait Timestamps
+{
+    private ?string $createdAt = null;
+    public function touch(): void { $this->createdAt = '2026-10-05'; }
+    public function createdAt(): ?string { return $this->createdAt; }
+}
+
+enum Role: string
+{
+    case Admin = 'admin';
+    case User = 'user';
+
+    public function label(): string
+    {
+        return match ($this) {
+            Role::Admin => '관리자',
+            Role::User => '일반 회원',
+        };
+    }
+}
+
+class Member
+{
+    use Timestamps;
+    private static int $count = 0;
+
+    public function __construct(
+        public readonly string $name,
+        public Role $role = Role::User,
+    ) {
+        self::$count++;
+    }
+
+    public static function count(): int { return self::$count; }
+}
+
+$shapes = [new Circle(1.5), new Rect(3, 4)];
+foreach ($shapes as $s) {
+    echo $s->describe(), "\n";
+}
+
+$m = new Member('길동', Role::Admin);
+$m->touch();
+new Member('영희');
+echo "{$m->name} ({$m->role->label()}) 가입일 {$m->createdAt()}\n";
+echo "회원 수: " . Member::count() . "\n";
+
+echo Role::from('user')->label(), "\n";
+var_dump(Role::tryFrom('guest'));   // NULL
+
+try {
+    $m->name = '철수';    // readonly
+} catch (Error $e) {
+    echo "오류: ", $e->getMessage(), "\n";
+}
+--- exercise
+`BankAccount` 클래스를 만드세요. 생성자 속성 승격으로 `readonly string $owner` 와 `private int $balance = 0` 을 받고, `deposit(int $amount)`, `withdraw(int $amount)`(잔액 부족 시 `InvalidArgumentException`), `getBalance()` 를 구현합니다. 메서드 체이닝이 되도록 deposit/withdraw는 `static` 을 반환하세요.
+--- solution
+<?php
+declare(strict_types=1);
+
+class BankAccount
+{
+    public function __construct(
+        public readonly string $owner,
+        private int $balance = 0,
+    ) {}
+
+    public function deposit(int $amount): static
+    {
+        if ($amount <= 0) throw new InvalidArgumentException("입금액은 양수여야 합니다");
+        $this->balance += $amount;
+        return $this;
+    }
+
+    public function withdraw(int $amount): static
+    {
+        if ($amount > $this->balance) throw new InvalidArgumentException("잔액 부족");
+        $this->balance -= $amount;
+        return $this;
+    }
+
+    public function getBalance(): int { return $this->balance; }
+}
+
+$acc = new BankAccount('길동');
+echo $acc->deposit(10000)->withdraw(3000)->getBalance(), "\n";   // 7000
+try {
+    $acc->withdraw(999999);
+} catch (InvalidArgumentException $e) {
+    echo "오류: {$e->getMessage()}\n";
+}
+--- quiz
+? `public function __construct(private string $name) {}` 와 같은 문법의 이름은?
+- 트레이트
++ 생성자 속성 승격 (Constructor Property Promotion)
+- 매직 메서드
+- 정적 팩토리
+! 속성 선언과 생성자에서의 대입을 한 번에 처리합니다 (PHP 8.0+).
+? 여러 클래스에 메서드 구현을 재사용하기 위해 `use` 로 포함하는 것은?
+- interface
+- abstract class
++ trait
+- namespace
+! PHP는 단일 상속이므로 트레이트로 수평적 코드 재사용을 합니다.
+
+=== 중급 | errors-json | 예외 처리, JSON, 파일
+## 예외 처리
+- `try { } catch (SpecificException $e) { } finally { }`
+- 여러 타입 잡기: `catch (A | B $e)`
+- 사용자 정의 예외: `class InsufficientStockException extends RuntimeException {}`
+- PHP 8에서는 많은 내부 오류가 `Error`/`TypeError` 예외로 던져집니다. 둘 다 `Throwable` 을 구현합니다.
+
+## JSON
+- `json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)` — 한글이 `\uXXXX` 로 바뀌지 않게 하려면 UNESCAPED_UNICODE
+- `json_decode($json, true)` — true면 연관 배열로 반환
+- `JSON_THROW_ON_ERROR` 플래그로 오류 시 예외 발생
+
+## 파일
+`file_put_contents`, `file_get_contents`, `file()`, `fopen/fgets/fclose`. API 서버에서는 `header('Content-Type: application/json')` 후 `echo json_encode(...)` 로 응답합니다.
+--- code
+<?php
+declare(strict_types=1);
+
+class InsufficientStockException extends RuntimeException
+{
+    public function __construct(public readonly string $item, int $requested)
+    {
+        parent::__construct("{$item} 재고 부족 (요청 {$requested}개)");
+    }
+}
+
+function order(array &$stock, string $item, int $qty): void
+{
+    if (!isset($stock[$item])) {
+        throw new InvalidArgumentException("없는 상품: $item");
+    }
+    if ($stock[$item] < $qty) {
+        throw new InsufficientStockException($item, $qty);
+    }
+    $stock[$item] -= $qty;
+}
+
+$stock = ['사과' => 5, '배' => 2];
+foreach ([['사과', 3], ['배', 10], ['망고', 1]] as [$item, $qty]) {
+    try {
+        order($stock, $item, $qty);
+        echo "주문 완료: $item x $qty\n";
+    } catch (InsufficientStockException | InvalidArgumentException $e) {
+        echo "실패: {$e->getMessage()}\n";
+    } finally {
+        echo "  (처리 끝)\n";
+    }
+}
+
+$data = ['user' => '길동', 'stock' => $stock, 'active' => true];
+$json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+echo $json, "\n";
+
+$file = sys_get_temp_dir() . '/stock.json';
+file_put_contents($file, $json);
+$loaded = json_decode(file_get_contents($file), true, flags: JSON_THROW_ON_ERROR);
+echo "불러온 사과 재고: {$loaded['stock']['사과']}\n";
+unlink($file);
+
+try {
+    json_decode('{잘못된 json', true, flags: JSON_THROW_ON_ERROR);
+} catch (JsonException $e) {
+    echo "JSON 오류: {$e->getMessage()}\n";
+}
+--- exercise
+JSON 문자열 `'[{"name":"키보드","price":45000,"qty":2},{"name":"마우스","price":25000,"qty":1}]'` 을 디코딩해 총 결제 금액을 계산하고, 결과를 `{"items":2,"total":115000}` 형태의 JSON으로 출력하세요.
+--- solution
+<?php
+$json = '[{"name":"키보드","price":45000,"qty":2},{"name":"마우스","price":25000,"qty":1}]';
+$cart = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
+
+$total = array_sum(array_map(fn($i) => $i['price'] * $i['qty'], $cart));
+echo json_encode(['items' => count($cart), 'total' => $total]), "\n";   // {"items":2,"total":115000}
+--- quiz
+? `json_decode($json, true)` 에서 두 번째 인자 true의 의미는?
++ 객체 대신 연관 배열로 반환
+- 오류 시 예외 발생
+- 들여쓰기된 출력
+- 한글 유지
+! 기본값(false)이면 stdClass 객체로 반환됩니다.
+? 한글이 `\uD55C` 처럼 변환되지 않도록 json_encode에 주는 플래그는?
+- `JSON_PRETTY_PRINT`
++ `JSON_UNESCAPED_UNICODE`
+- `JSON_THROW_ON_ERROR`
+- `JSON_HEX_TAG`
+! 여러 플래그는 | 로 조합합니다.
+
+=== 고급 | pdo | PDO로 데이터베이스 다루기
+**PDO(PHP Data Objects)** 는 MySQL, PostgreSQL, SQLite 등 여러 DB를 같은 API로 다루는 표준 확장입니다.
+
+## 핵심 원칙: Prepared Statement
+사용자 입력을 SQL 문자열에 직접 이어 붙이면 **SQL 인젝션** 공격에 당합니다.
+- ❌ `"SELECT * FROM users WHERE name = '$name'"` — `$name` 에 `' OR '1'='1` 이 들어오면 모든 행이 노출
+- ✅ `$stmt = $pdo->prepare("SELECT * FROM users WHERE name = ?"); $stmt->execute([$name]);`
+
+## 주요 API
+- 연결: `new PDO($dsn, $user, $pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION])`
+- `prepare` + `execute`, `fetch`, `fetchAll(PDO::FETCH_ASSOC)`, `lastInsertId()`
+- 이름 있는 플레이스홀더: `:email`
+- 트랜잭션: `beginTransaction()`, `commit()`, `rollBack()`
+
+> 예제는 별도 설치 없이 돌도록 SQLite 메모리 DB를 사용합니다(pdo_sqlite 확장 필요). MySQL이라면 DSN만 `mysql:host=localhost;dbname=app;charset=utf8mb4` 로 바꾸면 됩니다.
+--- code
+<?php
+declare(strict_types=1);
+
+$pdo = new PDO('sqlite::memory:', options: [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+]);
+
+$pdo->exec("CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    points INTEGER DEFAULT 0
+)");
+
+$insert = $pdo->prepare("INSERT INTO users (name, email, points) VALUES (:name, :email, :points)");
+foreach ([['길동', 'gd@ex.com', 100], ['영희', 'yh@ex.com', 250], ['철수', 'cs@ex.com', 80]] as [$n, $e, $p]) {
+    $insert->execute(['name' => $n, 'email' => $e, 'points' => $p]);
+}
+echo "마지막 ID: ", $pdo->lastInsertId(), "\n";
+
+$stmt = $pdo->prepare("SELECT name, points FROM users WHERE points >= ? ORDER BY points DESC");
+$stmt->execute([100]);
+foreach ($stmt->fetchAll() as $row) {
+    echo "{$row['name']}: {$row['points']}점\n";
+}
+
+// SQL 인젝션 시도 — prepared statement라 단순 문자열로 취급됨
+$malicious = "' OR '1'='1";
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE name = ?");
+$stmt->execute([$malicious]);
+echo "인젝션 시도 결과 행 수: ", $stmt->fetchColumn(), "\n";   // 0
+
+// 트랜잭션: 포인트 이체 (중간에 실패하면 전부 취소)
+function transfer(PDO $pdo, string $from, string $to, int $amount): void
+{
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare("UPDATE users SET points = points - ? WHERE name = ?")->execute([$amount, $from]);
+        $check = $pdo->prepare("SELECT points FROM users WHERE name = ?");
+        $check->execute([$from]);
+        if ($check->fetchColumn() < 0) {
+            throw new RuntimeException("포인트 부족");
+        }
+        $pdo->prepare("UPDATE users SET points = points + ? WHERE name = ?")->execute([$amount, $to]);
+        $pdo->commit();
+        echo "이체 성공: $from → $to ($amount)\n";
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        echo "이체 실패, 롤백: {$e->getMessage()}\n";
+    }
+}
+
+transfer($pdo, '영희', '철수', 50);
+transfer($pdo, '철수', '길동', 1000);
+foreach ($pdo->query("SELECT name, points FROM users ORDER BY id") as $row) {
+    echo "{$row['name']}={$row['points']} ";
+}
+echo "\n";
+
+try {
+    $insert->execute(['name' => '중복', 'email' => 'gd@ex.com', 'points' => 0]);
+} catch (PDOException $e) {
+    echo "UNIQUE 제약 위반 감지\n";
+}
+--- exercise
+SQLite 메모리 DB에 `posts(id, title, views)` 테이블을 만들고 글 3개를 prepared statement로 삽입하세요. 그다음 `function findPosts(PDO $pdo, string $keyword): array` 를 작성해 제목에 키워드가 포함된 글을 조회수 내림차순으로 반환하세요(`LIKE ?` 와 `"%$keyword%"` 바인딩).
+--- solution
+<?php
+declare(strict_types=1);
+
+$pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$pdo->exec("CREATE TABLE posts (id INTEGER PRIMARY KEY, title TEXT, views INTEGER)");
+$ins = $pdo->prepare("INSERT INTO posts (title, views) VALUES (?, ?)");
+foreach ([['PHP 입문', 120], ['PHP와 PDO', 340], ['자바스크립트 기초', 200]] as $row) {
+    $ins->execute($row);
+}
+
+function findPosts(PDO $pdo, string $keyword): array
+{
+    $stmt = $pdo->prepare("SELECT title, views FROM posts WHERE title LIKE ? ORDER BY views DESC");
+    $stmt->execute(["%{$keyword}%"]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+foreach (findPosts($pdo, 'PHP') as $p) {
+    echo "{$p['title']} ({$p['views']})\n";   // PHP와 PDO (340), PHP 입문 (120)
+}
+--- quiz
+? SQL 인젝션을 막는 가장 확실한 방법은?
+- 입력값에서 따옴표를 str_replace로 제거
++ Prepared Statement와 바인딩 파라미터 사용
+- SQL 문을 대문자로 작성
+- 에러 메시지 숨기기
+! 데이터가 SQL 구문과 분리되어 전달되므로 코드로 해석되지 않습니다.
+? 여러 쿼리를 하나의 작업 단위로 묶어 실패 시 모두 취소하는 기능은?
+- 인덱스
++ 트랜잭션 (beginTransaction / commit / rollBack)
+- 뷰
+- 커서
+! 계좌 이체처럼 원자성이 필요한 작업에 사용합니다.
+
+=== 고급 | modern | 모던 PHP: Composer, 네임스페이스, 테스트
+현대 PHP 개발은 2010년대 이전의 "PHP 파일에 HTML과 SQL 섞기"와 완전히 다릅니다.
+
+## Composer
+PHP 패키지 관리자이자 오토로더입니다.
+- `composer init`, `composer require guzzlehttp/guzzle`
+- `composer.json` 의 PSR-4 설정으로 클래스 자동 로딩 → `require 'vendor/autoload.php';`
+- 패키지 저장소: packagist.org
+
+## 네임스페이스와 PSR 표준
+- `namespace App\Service;`, `use App\Model\User;`
+- PSR-4(오토로딩), PSR-12(코딩 스타일), PSR-7/15(HTTP 메시지/미들웨어)
+
+## 프레임워크와 도구
+- **Laravel**: 가장 인기 있는 풀스택 프레임워크 (Eloquent ORM, Blade, Artisan)
+- **Symfony**: 컴포넌트 기반 엔터프라이즈 프레임워크
+- 정적 분석: PHPStan, Psalm / 테스트: PHPUnit, Pest / 포매터: PHP-CS-Fixer
+
+## 모던 문법 정리
+`readonly class`(8.2), first-class callable `strlen(...)`(8.1), `never` 반환 타입, 속성(Attributes) `#[Route('/users')]`, nullsafe `?->`
+--- code
+<?php
+declare(strict_types=1);
+
+namespace App\Domain;
+
+// 실제 프로젝트에서는 클래스마다 파일을 나누고 composer의 PSR-4 오토로딩을 사용합니다.
+
+#[\Attribute]
+final class Route
+{
+    public function __construct(public string $path, public string $method = 'GET') {}
+}
+
+final readonly class Money
+{
+    public function __construct(public int $amount, public string $currency = 'KRW') {}
+
+    public function add(Money $other): self
+    {
+        if ($other->currency !== $this->currency) {
+            throw new \InvalidArgumentException('통화가 다릅니다');
+        }
+        return new self($this->amount + $other->amount, $this->currency);
+    }
+
+    public function __toString(): string
+    {
+        return number_format($this->amount) . " {$this->currency}";
+    }
+}
+
+final class ProductController
+{
+    #[Route('/products', method: 'GET')]
+    public function list(): array { return ['키보드', '마우스']; }
+
+    #[Route('/products', method: 'POST')]
+    public function create(): string { return 'created'; }
+}
+
+// Reflection으로 Attribute 읽기 — 프레임워크가 라우팅 테이블을 만드는 원리
+$ref = new \ReflectionClass(ProductController::class);
+foreach ($ref->getMethods() as $method) {
+    foreach ($method->getAttributes(Route::class) as $attr) {
+        $route = $attr->newInstance();
+        echo "{$route->method} {$route->path} → {$method->getName()}()\n";
+    }
+}
+
+$total = (new Money(15000))->add(new Money(2500));
+echo $total, "\n";                         // 17,500 KRW
+
+$upper = strtoupper(...);                  // first-class callable
+echo implode(",", array_map($upper, ['a', 'b'])), "\n";
+
+$user = null;
+echo $user?->profile?->nickname ?? '닉네임 없음', "\n";   // nullsafe 연산자
+
+// 간단한 테스트 흉내 (실무에서는 PHPUnit/Pest 사용)
+function assertSame(mixed $expected, mixed $actual, string $msg): void
+{
+    echo ($expected === $actual ? "✔ " : "✘ ") . $msg . "\n";
+}
+assertSame(17500, $total->amount, 'Money::add 합산');
+--- exercise
+`namespace App\Util;` 안에 `final class Str` 을 만들고 정적 메서드 `slug(string $text): string`(소문자, 공백→하이픈, 영숫자·하이픈 외 제거)과 `truncate(string $text, int $len): string`(한글도 안전하게 `mb_substr` 사용, 잘리면 "…" 추가)을 작성하세요.
+--- solution
+<?php
+declare(strict_types=1);
+
+namespace App\Util;
+
+final class Str
+{
+    public static function slug(string $text): string
+    {
+        $s = strtolower(trim($text));
+        $s = preg_replace('/\s+/', '-', $s);
+        $s = preg_replace('/[^a-z0-9-]/', '', $s);
+        return trim(preg_replace('/-+/', '-', $s), '-');
+    }
+
+    public static function truncate(string $text, int $len): string
+    {
+        return mb_strlen($text) > $len ? mb_substr($text, 0, $len) . '…' : $text;
+    }
+}
+
+echo Str::slug("  Hello PHP World! 2026 "), "\n";   // hello-php-world-2026
+echo Str::truncate("모던 PHP는 정말 강력합니다", 6), "\n";   // 모던 PHP…
+--- quiz
+? PHP의 패키지 관리자이자 오토로딩 도구는?
+- npm
+- pip
++ Composer
+- Maven
+! composer require 로 packagist.org의 패키지를 설치합니다.
+? `$user?->profile` 에서 `?->` 연산자의 역할은?
++ $user가 null이면 오류 없이 null을 반환
+- $user를 복제
+- 비공개 속성에 접근
+- 정적 메서드 호출
+! nullsafe 연산자(PHP 8.0)입니다.

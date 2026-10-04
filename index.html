@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>코드 아카데미 — 모든 프로그래밍 언어를 단계별로</title>
+  <meta name="description" content="Python, JavaScript, Java, C, Rust, Go 등 20개 프로그래밍 언어를 입문부터 고급까지 단계별로 배우는 한국어 코딩 학습 사이트">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <script>
+    (function () { try { var t = localStorage.getItem('ca-theme'); if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <button class="icon-btn menu-btn" id="menuBtn" aria-label="메뉴 열기">☰</button>
+    <a class="logo" href="#/"><span class="logo-mark">{ }</span><span class="logo-text">코드 아카데미</span></a>
+    <nav class="topnav" id="topnav">
+      <a href="#/" data-nav="home">홈</a>
+      <a href="#/languages" data-nav="languages">언어</a>
+      <a href="#/roadmap" data-nav="roadmap">로드맵</a>
+      <a href="#/playground" data-nav="playground">플레이그라운드</a>
+      <a href="#/progress" data-nav="progress">내 학습</a>
+    </nav>
+    <div class="search-wrap">
+      <input id="searchInput" type="search" placeholder="레슨 검색…  ( / )" autocomplete="off" aria-label="레슨 검색">
+      <div class="search-pop" id="searchPop" hidden></div>
+    </div>
+    <button class="icon-btn" id="themeBtn" aria-label="다크/라이트 모드 전환" title="다크/라이트 모드">🌙</button>
+  </header>
+  <div class="drawer-backdrop" id="backdrop"></div>
+  <main id="app" tabindex="-1"><div class="loading">불러오는 중…</div></main>
+  <footer class="footer">
+    <p>코드 아카데미 · 정적 사이트 · 학습 진도는 이 브라우저(localStorage)에만 저장됩니다.</p>
+  </footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/core.js"></script>
+  <script src="js/highlight.js"></script>
+  <!-- DATA:START -->
+  <script src="js/data/lang-python.js"></script>
+  <script src="js/data/lang-javascript.js"></script>
+  <script src="js/data/lang-typescript.js"></script>
+  <script src="js/data/lang-htmlcss.js"></script>
+  <script src="js/data/lang-java.js"></script>
+  <script src="js/data/lang-c.js"></script>
+  <script src="js/data/lang-cpp.js"></script>
+  <script src="js/data/lang-csharp.js"></script>
+  <script src="js/data/lang-go.js"></script>
+  <script src="js/data/lang-rust.js"></script>
+  <script src="js/data/lang-php.js"></script>
+  <script src="js/data/lang-sql.js"></script>
+  <script src="js/data/lang-bash.js"></script>
+  <!-- DATA:END -->
+  <script src="js/roadmap.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

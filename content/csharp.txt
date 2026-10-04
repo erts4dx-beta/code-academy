@@ -1,0 +1,734 @@
+@id csharp
+@name C#
+@badge C#
+@color #68217a
+@difficulty 3
+@category 범용
+@year 2000
+@uses 게임 개발(Unity) · 윈도우 앱 · 웹 백엔드(ASP.NET Core) · 엔터프라이즈
+@desc 마이크로소프트가 만든 현대적인 객체지향 언어로 .NET 위에서 동작합니다. Unity 게임 엔진의 표준 언어이며, 크로스플랫폼 웹 서버 개발에도 강력합니다.
+
+=== 입문 | hello | C# 시작하기: .NET과 최상위 문
+C#(씨샵)은 .NET 런타임 위에서 동작하는 언어입니다. 현재 .NET은 **오픈 소스이며 Windows, macOS, Linux에서 모두 동작**합니다.
+
+## 시작하기
+1. .NET SDK 설치 (dotnet.microsoft.com, LTS 버전 권장)
+2. `dotnet new console -n HelloApp` 으로 프로젝트 생성
+3. `cd HelloApp && dotnet run` 으로 실행
+4. IDE: Visual Studio, JetBrains Rider, VS Code(C# Dev Kit)
+
+## 최상위 문 (C# 9+)
+예전에는 `class Program { static void Main() { ... } }` 가 필요했지만, 이제는 `Program.cs` 에 코드만 바로 써도 됩니다. 아래 예제는 최상위 문 스타일입니다.
+
+`Console.WriteLine` 으로 출력하고, 문자열 앞에 `$` 를 붙이면 **문자열 보간**으로 `{변수}` 를 넣을 수 있습니다.
+--- code
+// Program.cs
+Console.WriteLine("Hello, World!");
+
+string name = "길동";
+int year = 2026;
+Console.WriteLine($"안녕하세요, {name}님! 올해는 {year}년입니다.");
+Console.WriteLine($"원주율: {Math.PI:F2}");     // 서식 지정: 3.14
+
+Console.Write("이름을 입력하세요: ");
+string? input = Console.ReadLine();
+Console.WriteLine($"반가워요, {input ?? "손님"}!");
+--- exercise
+상품 이름, 단가, 수량을 변수로 선언하고 문자열 보간과 서식 지정자(`{값:N0}` 은 천 단위 구분)를 사용해 `노트북 1,250,000원 x 2개 = 2,500,000원` 형식으로 출력하세요.
+--- solution
+string product = "노트북";
+int price = 1_250_000;
+int qty = 2;
+Console.WriteLine($"{product} {price:N0}원 x {qty}개 = {price * qty:N0}원");
+--- quiz
+? C# 문자열 앞의 `$` 기호의 역할은?
+- 통화 기호 출력
++ 문자열 보간을 활성화해 `{}` 안에 식을 넣을 수 있게 함
+- 문자열을 상수로 만듦
+- 이스케이프 문자를 무시함
+! 이스케이프를 무시하는 것은 @ (축자 문자열)입니다.
+? 현재 .NET에 대한 설명으로 옳은 것은?
+- Windows에서만 동작한다
++ 오픈 소스이며 Windows, macOS, Linux를 지원한다
+- 자바 가상 머신에서 동작한다
+- 웹 브라우저에서만 동작한다
+! .NET Core 이후 .NET은 크로스플랫폼 오픈 소스입니다.
+
+=== 입문 | types | 자료형, 변수, 제어문
+## 주요 자료형
+- 정수: `int`, `long`, 실수: `double`, `float`(f), `decimal`(m, **금액 계산용** 고정밀 십진수)
+- `bool`, `char`, `string`
+- `var`: 지역 변수 타입 추론 (타입은 컴파일 시 고정)
+- **값 형식**(int, struct 등)은 값 자체를, **참조 형식**(class, string, 배열)은 참조를 저장
+
+## 널 허용
+`int?` 는 null을 담을 수 있는 int입니다. 참조 형식도 nullable 문맥에서는 `string?` 로 null 가능성을 명시하고, 컴파일러가 null 경고를 해 줍니다. `??`(null 병합), `?.`(null 조건) 연산자를 활용하세요.
+
+## 제어문
+`if/else`, `switch` 문과 **switch 식**(`x switch { ... }`), `for`, `foreach`, `while`, `do-while`.
+--- code
+int age = 30;
+double height = 175.5;
+decimal price = 19.99m;           // 금액은 decimal
+bool isMember = true;
+var city = "서울";                 // string으로 추론
+
+Console.WriteLine($"{age} {height} {price} {isMember} {city}");
+Console.WriteLine(0.1 + 0.2 == 0.3);       // False (double 오차)
+Console.WriteLine(0.1m + 0.2m == 0.3m);    // True  (decimal)
+
+int? bonus = null;
+Console.WriteLine(bonus ?? 0);             // 0
+
+int score = 87;
+string grade = score switch
+{
+    >= 90 => "A",
+    >= 80 => "B",
+    >= 70 => "C",
+    _ => "F"
+};
+Console.WriteLine($"학점: {grade}");
+
+for (int i = 1; i <= 3; i++) Console.Write($"{i} ");
+Console.WriteLine();
+
+string[] fruits = { "사과", "배", "포도" };
+foreach (var f in fruits) Console.WriteLine(f);
+
+int n = 0;
+while (n < 3) n++;
+Console.WriteLine($"n = {n}");
+--- exercise
+1부터 30까지 반복하면서 switch 식을 사용해 15의 배수는 "FizzBuzz", 3의 배수는 "Fizz", 5의 배수는 "Buzz", 나머지는 숫자를 출력하세요. (힌트: `(i % 3, i % 5) switch { (0, 0) => ... }` 튜플 패턴)
+--- solution
+for (int i = 1; i <= 30; i++)
+{
+    string s = (i % 3, i % 5) switch
+    {
+        (0, 0) => "FizzBuzz",
+        (0, _) => "Fizz",
+        (_, 0) => "Buzz",
+        _ => i.ToString()
+    };
+    Console.WriteLine(s);
+}
+--- quiz
+? 금액처럼 정확한 십진 계산이 필요할 때 적합한 타입은?
+- `double`
+- `float`
++ `decimal`
+- `int`
+! decimal은 28~29자리 정밀도의 십진 부동소수점으로 금융 계산에 적합합니다.
+? `int? x = null; int y = x ?? 5;` 실행 후 y의 값은?
++ 5
+- null
+- 0
+- 컴파일 오류
+! ?? 연산자는 왼쪽이 null이면 오른쪽 값을 사용합니다.
+
+=== 입문 | methods | 메서드와 문자열 처리
+## 메서드
+- `static int Add(int a, int b) => a + b;` — 식 본문 멤버(`=>`)
+- 선택적 매개변수 `int level = 1`, 명명된 인자 `Log(msg: "hi", level: 2)`
+- `params int[] nums`: 가변 인자
+- `out` 매개변수: 여러 값 반환 (`int.TryParse("12", out int n)`)
+- 튜플 반환: `(int min, int max) MinMax(...)`
+
+## 문자열
+`string` 은 불변입니다. `Length`, `ToUpper()`, `Trim()`, `Split()`, `Contains()`, `Replace()`, `Substring()`, `string.Join()`. 반복 연결은 `StringBuilder`. `@"C:\path"` 축자 문자열, `"""` 원시 문자열 리터럴(C# 11).
+--- code
+using System.Text;
+
+static int Add(int a, int b) => a + b;
+
+static double Average(params int[] nums) => nums.Length == 0 ? 0 : nums.Average();
+
+static (int Min, int Max) MinMax(int[] arr)
+{
+    int min = arr[0], max = arr[0];
+    foreach (var x in arr)
+    {
+        if (x < min) min = x;
+        if (x > max) max = x;
+    }
+    return (min, max);
+}
+
+static void Log(string message, string level = "INFO") =>
+    Console.WriteLine($"[{level}] {message}");
+
+Console.WriteLine(Add(3, 4));
+Console.WriteLine(Average(90, 80, 70));
+var (lo, hi) = MinMax(new[] { 5, 2, 9, 1 });
+Console.WriteLine($"{lo} ~ {hi}");
+Log("서버 시작");
+Log(level: "WARN", message: "메모리 부족");
+
+if (int.TryParse("123", out int value)) Console.WriteLine(value + 1);   // 124
+Console.WriteLine(int.TryParse("abc", out _));                          // False
+
+string s = "  Hello, C#  ";
+Console.WriteLine(s.Trim().ToUpper());
+Console.WriteLine(string.Join(" | ", "a,b,c".Split(',')));
+
+var sb = new StringBuilder();
+for (int i = 0; i < 5; i++) sb.Append(i).Append(' ');
+Console.WriteLine(sb.ToString().TrimEnd());
+--- exercise
+문자열이 회문(앞뒤가 같은 문자열, 예: "level", "토마토")인지 판별하는 `static bool IsPalindrome(string s)` 를 작성하세요. 대소문자와 공백은 무시합니다.
+--- solution
+static bool IsPalindrome(string s)
+{
+    var clean = new string(s.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToLower();
+    for (int i = 0, j = clean.Length - 1; i < j; i++, j--)
+        if (clean[i] != clean[j]) return false;
+    return true;
+}
+
+Console.WriteLine(IsPalindrome("Level"));        // True
+Console.WriteLine(IsPalindrome("토마토"));        // True
+Console.WriteLine(IsPalindrome("never odd or even"));  // True
+Console.WriteLine(IsPalindrome("hello"));        // False
+--- quiz
+? `int.TryParse("abc", out int n)` 의 결과는?
++ false를 반환하고 n은 0이 된다
+- 예외가 발생한다
+- true를 반환한다
+- n이 null이 된다
+! TryParse는 예외 대신 성공 여부를 bool로 반환합니다.
+? `static int Square(int x) => x * x;` 의 `=>` 는?
+- 람다 캡처
++ 식 본문 멤버(한 줄짜리 메서드 본문)
+- 포인터 연산
+- 비교 연산자
+! { return x * x; } 와 동일합니다.
+
+=== 초급 | classes | 클래스, 속성, 레코드
+## 클래스 구성
+- 필드(보통 private), **속성(property)**: `public string Name { get; set; }` — getter/setter를 간결하게
+- `init` 접근자: 객체 생성 시에만 설정 가능
+- `required` (C# 11): 반드시 초기화해야 하는 속성
+- 생성자, **기본 생성자**(C# 12): `class Point(int x, int y)`
+- 객체 초기화자: `new Person { Name = "길동", Age = 30 }`
+
+## record
+`record Person(string Name, int Age);` — 값 기반 동등성, `ToString`, 분해, `with` 식(일부만 바꾼 복사본)을 자동 제공하는 불변 데이터 타입입니다. DTO, 값 객체에 적합합니다.
+
+## struct vs class
+`struct` 는 값 형식(복사됨), `class` 는 참조 형식입니다. 작고 불변인 데이터(좌표, 색상)는 struct가 적합합니다.
+--- code
+var acc = new BankAccount("길동", 10_000);
+acc.Deposit(5_000);
+Console.WriteLine(acc.Withdraw(50_000));   // False
+Console.WriteLine(acc);
+
+var p1 = new Person("영희", 28);
+var p2 = p1 with { Age = 29 };             // 일부만 바꾼 복사본
+Console.WriteLine(p1);                      // Person { Name = 영희, Age = 28 }
+Console.WriteLine(p1 == new Person("영희", 28));   // True (값 비교)
+var (name, age) = p2;
+Console.WriteLine($"{name} {age}");
+
+var item = new Product { Name = "키보드", Price = 59000 };
+Console.WriteLine($"{item.Name}: {item.Price:N0}원");
+
+public class BankAccount
+{
+    public string Owner { get; }
+    public decimal Balance { get; private set; }     // 외부에서는 읽기만
+
+    public BankAccount(string owner, decimal initial = 0)
+    {
+        Owner = owner;
+        Balance = initial;
+    }
+
+    public void Deposit(decimal amount)
+    {
+        if (amount <= 0) throw new ArgumentException("입금액은 양수여야 합니다");
+        Balance += amount;
+    }
+
+    public bool Withdraw(decimal amount)
+    {
+        if (amount > Balance) return false;
+        Balance -= amount;
+        return true;
+    }
+
+    public override string ToString() => $"{Owner}: {Balance:N0}원";
+}
+
+public record Person(string Name, int Age);
+
+public class Product
+{
+    public required string Name { get; init; }
+    public decimal Price { get; init; }
+}
+--- exercise
+`record Book(string Title, string Author, int Price)` 를 정의하고, 책 하나를 만든 뒤 `with` 식으로 가격만 10% 할인된 복사본을 만들어 둘 다 출력하세요. 두 레코드를 `==` 로 비교해 보세요.
+--- solution
+var book = new Book("C# 프로그래밍", "홍길동", 30000);
+var sale = book with { Price = (int)(book.Price * 0.9) };
+Console.WriteLine(book);    // Book { Title = C# 프로그래밍, Author = 홍길동, Price = 30000 }
+Console.WriteLine(sale);    // ... Price = 27000 }
+Console.WriteLine(book == sale);   // False
+
+public record Book(string Title, string Author, int Price);
+--- quiz
+? `public decimal Balance { get; private set; }` 의 의미는?
+- 외부에서 읽고 쓸 수 있다
++ 외부에서는 읽기만 가능하고 값 변경은 클래스 내부에서만 가능하다
+- 읽을 수 없다
+- 상수이다
+! 접근자마다 다른 접근 제한자를 줄 수 있습니다.
+? record 타입의 `==` 비교 방식은?
+- 참조(주소) 비교
++ 모든 속성 값이 같은지 비교하는 값 기반 동등성
+- 항상 false
+- 이름만 비교
+! record는 값 기반 동등성을 자동으로 구현합니다.
+
+=== 초급 | collections-linq | 컬렉션과 LINQ
+## 컬렉션 (`System.Collections.Generic`)
+- `List<T>`: 동적 배열 — `Add`, `Remove`, `Count`, 인덱서
+- `Dictionary<TKey, TValue>`: 해시 맵 — `TryGetValue`, `ContainsKey`
+- `HashSet<T>`, `Queue<T>`, `Stack<T>`
+- 컬렉션 식 (C# 12): `List<int> nums = [1, 2, 3];`
+
+## LINQ (Language Integrated Query)
+컬렉션, 데이터베이스, XML 등을 **같은 문법으로 질의**하는 C#의 대표 기능입니다.
+- `Where`(필터), `Select`(변환), `OrderBy` / `OrderByDescending`, `GroupBy`
+- `First`, `FirstOrDefault`, `Any`, `All`, `Count`, `Sum`, `Average`, `Max`
+- `ToList()`, `ToDictionary()` 로 결과를 구체화
+- LINQ는 **지연 실행**됩니다. 결과를 열거할 때 비로소 계산됩니다.
+--- code
+List<Employee> emps =
+[
+    new("길동", "개발", 6000),
+    new("영희", "개발", 7200),
+    new("철수", "영업", 4800),
+    new("민수", "영업", 5100),
+    new("지수", "디자인", 5500),
+];
+
+var highPaid = emps.Where(e => e.Salary >= 5500)
+                   .OrderByDescending(e => e.Salary)
+                   .Select(e => e.Name);
+Console.WriteLine(string.Join(", ", highPaid));    // 영희, 길동, 지수
+
+foreach (var g in emps.GroupBy(e => e.Dept))
+    Console.WriteLine($"{g.Key}: 평균 {g.Average(e => e.Salary):N0}, {g.Count()}명");
+
+Console.WriteLine(emps.Any(e => e.Dept == "기획"));          // False
+Console.WriteLine(emps.Max(e => e.Salary));                  // 7200
+var first = emps.FirstOrDefault(e => e.Name.StartsWith("지"));
+Console.WriteLine(first?.Name ?? "없음");
+
+// 쿼리 구문 (SQL과 비슷)
+var query = from e in emps
+            where e.Dept == "영업"
+            orderby e.Name
+            select new { e.Name, Bonus = e.Salary * 0.1 };
+foreach (var x in query) Console.WriteLine($"{x.Name} 보너스 {x.Bonus}");
+
+var stock = new Dictionary<string, int> { ["사과"] = 10, ["배"] = 3 };
+stock["포도"] = 7;
+if (stock.TryGetValue("배", out int pears)) Console.WriteLine($"배 {pears}개");
+
+record Employee(string Name, string Dept, int Salary);
+--- exercise
+`int[] nums = { 5, 12, 8, 3, 21, 16, 7 };` 에서 LINQ로 (1) 짝수만 골라 제곱한 리스트, (2) 10보다 큰 수의 개수, (3) 전체 평균을 소수점 둘째 자리까지 출력하세요.
+--- solution
+int[] nums = { 5, 12, 8, 3, 21, 16, 7 };
+var evenSquares = nums.Where(n => n % 2 == 0).Select(n => n * n).ToList();
+Console.WriteLine(string.Join(", ", evenSquares));   // 144, 64, 256
+Console.WriteLine(nums.Count(n => n > 10));          // 3
+Console.WriteLine($"{nums.Average():F2}");           // 10.29
+--- quiz
+? LINQ의 지연 실행(deferred execution)이란?
++ 쿼리를 정의할 때가 아니라 결과를 열거할 때 실제로 계산된다
+- 쿼리가 별도 스레드에서 나중에 실행된다
+- 쿼리를 정의하는 즉시 결과가 계산된다
+- 쿼리가 데이터베이스에서만 실행된다
+! ToList(), foreach, Count() 등을 호출할 때 실행됩니다.
+? Dictionary에서 키가 없을 때 예외 없이 안전하게 값을 읽는 메서드는?
+- `dict[key]`
++ `TryGetValue`
+- `Get`
+- `Find`
+! 존재하지 않는 키로 인덱서를 사용하면 KeyNotFoundException이 발생합니다.
+
+=== 중급 | oop | 상속, 인터페이스, 다형성
+## 상속
+`class Dog : Animal` — 단일 클래스 상속. 부모의 `virtual` 메서드를 자식이 `override` 합니다. `abstract` 클래스/메서드는 구현을 강제하고, `sealed` 는 상속을 막습니다. `base` 로 부모 멤버에 접근합니다.
+
+## 인터페이스
+`interface IShape { double Area(); }` — 관례적으로 이름 앞에 `I` 를 붙입니다. 클래스는 여러 인터페이스를 구현할 수 있으며, `IComparable<T>`, `IEnumerable<T>`, `IDisposable` 같은 표준 인터페이스를 구현하면 프레임워크와 자연스럽게 연동됩니다.
+
+## 패턴 매칭
+`is` 와 `switch` 에서 타입 패턴, 속성 패턴(`{ Age: > 18 }`), 리스트 패턴(`[1, .., var last]`)을 사용할 수 있습니다.
+--- code
+List<Shape> shapes = [new Circle(1), new Rect(2, 3), new Rect(4, 4)];
+foreach (var s in shapes) Console.WriteLine(s.Describe());
+
+shapes.Sort();                                       // IComparable 덕분에 정렬 가능
+Console.WriteLine(string.Join(" < ", shapes.Select(s => s.Name)));
+
+foreach (var s in shapes)
+{
+    string info = s switch
+    {
+        Circle { Radius: > 5 } => "큰 원",
+        Circle c => $"반지름 {c.Radius}인 원",
+        Rect { Width: var w, Height: var h } when w == h => "정사각형",
+        Rect => "직사각형",
+        _ => "알 수 없음"
+    };
+    Console.WriteLine(info);
+}
+
+int[] arr = [1, 2, 3, 9];
+if (arr is [1, .., var last]) Console.WriteLine($"1로 시작, 마지막은 {last}");
+
+public abstract class Shape : IComparable<Shape>
+{
+    public abstract string Name { get; }
+    public abstract double Area();
+    public virtual string Describe() => $"{Name}: {Area():F2}";
+    public int CompareTo(Shape? other) => Area().CompareTo(other?.Area() ?? 0);
+}
+
+public class Circle(double radius) : Shape
+{
+    public double Radius { get; } = radius;
+    public override string Name => "원";
+    public override double Area() => Math.PI * Radius * Radius;
+}
+
+public class Rect(double width, double height) : Shape
+{
+    public double Width { get; } = width;
+    public double Height { get; } = height;
+    public override string Name => Width == Height ? "정사각형" : "직사각형";
+    public override double Area() => Width * Height;
+    public override string Describe() => base.Describe() + $" ({Width}x{Height})";
+}
+--- exercise
+`interface INotifier { void Send(string message); }` 를 정의하고 `EmailNotifier`, `SmsNotifier` 를 구현하세요. `List<INotifier>` 에 담아 모두에게 "서버 점검 안내"를 보내는 코드를 작성하세요.
+--- solution
+List<INotifier> notifiers = [new EmailNotifier("a@b.com"), new SmsNotifier("010-1234-5678")];
+foreach (var n in notifiers) n.Send("서버 점검 안내");
+
+public interface INotifier
+{
+    void Send(string message);
+}
+
+public class EmailNotifier(string address) : INotifier
+{
+    public void Send(string message) => Console.WriteLine($"[이메일→{address}] {message}");
+}
+
+public class SmsNotifier(string phone) : INotifier
+{
+    public void Send(string message) => Console.WriteLine($"[SMS→{phone}] {message}");
+}
+--- quiz
+? 자식 클래스에서 재정의할 수 있도록 부모 메서드에 붙이는 키워드는?
+- `override`
++ `virtual`
+- `sealed`
+- `static`
+! 부모는 virtual(또는 abstract), 자식은 override를 사용합니다.
+? `obj is Circle { Radius: > 5 }` 의 의미는?
++ obj가 Circle 타입이고 Radius 속성이 5보다 큰지 검사
+- obj의 Radius를 5로 설정
+- Circle 클래스를 생성
+- 항상 true
+! 타입 패턴과 속성 패턴을 조합한 패턴 매칭입니다.
+
+=== 중급 | exceptions-delegates | 예외, 델리게이트, 이벤트
+## 예외 처리
+`try / catch (특정예외 e) / finally`. `catch (Exception e) when (조건)` 으로 예외 필터도 가능합니다. **`using` 문/선언**은 `IDisposable` 자원을 자동 해제합니다(파일, DB 연결).
+
+## 델리게이트와 람다
+델리게이트는 **메서드를 가리키는 타입**입니다. 직접 정의하기보다 내장 타입을 주로 씁니다.
+- `Action<T>`: 반환값 없음
+- `Func<T, TResult>`: 반환값 있음
+- `Predicate<T>`: bool 반환
+
+## 이벤트
+`event` 키워드는 델리게이트 기반의 **발행-구독** 패턴입니다. Unity와 WinForms/WPF의 버튼 클릭 처리가 대표적인 예입니다. 외부에서는 `+=` / `-=` 로 구독만 할 수 있고 직접 호출은 할 수 없습니다.
+--- code
+Func<int, int, int> add = (a, b) => a + b;
+Action<string> log = msg => Console.WriteLine($"[LOG] {msg}");
+Predicate<int> isEven = n => n % 2 == 0;
+log($"3 + 4 = {add(3, 4)}, 10은 짝수? {isEven(10)}");
+
+static int Apply(int x, Func<int, int> f) => f(x);
+Console.WriteLine(Apply(5, n => n * n));      // 25
+
+var player = new Player("용사");
+player.HealthChanged += (sender, hp) => Console.WriteLine($"체력: {hp}");
+player.Died += () => Console.WriteLine("게임 오버!");
+player.TakeDamage(30);
+player.TakeDamage(80);
+
+try
+{
+    int[] arr = new int[3];
+    arr[5] = 1;
+}
+catch (IndexOutOfRangeException e)
+{
+    Console.WriteLine($"인덱스 오류: {e.Message}");
+}
+catch (Exception e) when (e.Message.Contains("timeout"))
+{
+    Console.WriteLine("타임아웃만 처리");
+}
+finally
+{
+    Console.WriteLine("항상 실행");
+}
+
+using (var writer = new StreamWriter("log.txt"))   // 블록 끝에서 자동 Dispose
+{
+    writer.WriteLine("파일에 기록");
+}
+Console.WriteLine(File.ReadAllText("log.txt").Trim());
+
+public class Player(string name)
+{
+    public string Name { get; } = name;
+    public int Health { get; private set; } = 100;
+    public event Action<object, int>? HealthChanged;
+    public event Action? Died;
+
+    public void TakeDamage(int amount)
+    {
+        Health = Math.Max(0, Health - amount);
+        HealthChanged?.Invoke(this, Health);
+        if (Health == 0) Died?.Invoke();
+    }
+}
+--- exercise
+`class Thermostat` 를 만들어 온도를 설정하는 `SetTemperature(double t)` 메서드에서 온도가 30도를 넘으면 `event Action<double>? Overheated` 이벤트를 발생시키세요. 구독자 2개(경고 출력, 팬 작동 출력)를 등록해 테스트하세요.
+--- solution
+var t = new Thermostat();
+t.Overheated += temp => Console.WriteLine($"⚠ 경고: {temp}도!");
+t.Overheated += temp => Console.WriteLine("팬 작동 시작");
+t.SetTemperature(25);
+t.SetTemperature(32.5);
+
+public class Thermostat
+{
+    public event Action<double>? Overheated;
+    public double Temperature { get; private set; }
+
+    public void SetTemperature(double t)
+    {
+        Temperature = t;
+        if (t > 30) Overheated?.Invoke(t);
+    }
+}
+--- quiz
+? 값을 반환하는 람다를 담는 내장 델리게이트 타입은?
+- `Action<T>`
++ `Func<T, TResult>`
+- `EventHandler`
+- `Task`
+! Action은 반환값이 없고, Func의 마지막 타입 인자가 반환 타입입니다.
+? `using var file = File.OpenRead(path);` 의 효과는?
++ 변수가 스코프를 벗어날 때 Dispose가 자동 호출된다
+- 파일을 전역으로 등록한다
+- 파일을 읽기 전용 상수로 만든다
+- 네임스페이스를 가져온다
+! using 선언은 IDisposable 자원을 안전하게 해제합니다.
+
+=== 고급 | generics | 제네릭과 확장 메서드
+## 제네릭
+`class Repository<T>`, `T Max<T>(T a, T b)` 처럼 타입을 매개변수로 받습니다. C#의 제네릭은 런타임에도 타입 정보가 유지됩니다(자바의 타입 소거와 다름).
+
+## 제약 조건 (where)
+- `where T : class` / `struct` / `new()` / `notnull`
+- `where T : IComparable<T>` — 특정 인터페이스 구현 요구
+- `where T : BaseClass`
+- 제네릭 수학(C# 11): `where T : INumber<T>` 로 모든 숫자 타입에 동작하는 함수
+
+## 확장 메서드
+`static` 클래스의 `static` 메서드 첫 매개변수에 `this` 를 붙이면, 기존 타입에 메서드를 **추가한 것처럼** 호출할 수 있습니다. LINQ의 `Where`, `Select` 가 모두 `IEnumerable<T>` 의 확장 메서드입니다.
+--- code
+using System.Numerics;
+
+var repo = new Repository<User>();
+repo.Add(new User(1, "길동"));
+repo.Add(new User(2, "영희"));
+Console.WriteLine(repo.GetById(2)?.Name);       // 영희
+Console.WriteLine(repo.Count);
+
+Console.WriteLine(Util.MaxOf(3, 9));            // 9
+Console.WriteLine(Util.MaxOf("apple", "banana"));
+Console.WriteLine(Util.Sum(new[] { 1, 2, 3 }));         // 6
+Console.WriteLine(Util.Sum(new[] { 1.5, 2.5 }));        // 4
+
+Console.WriteLine("hello world".ToTitleCase());          // Hello World
+var nums = new[] { 1, 2, 3, 4, 5, 6 };
+Console.WriteLine(string.Join(",", nums.EveryNth(2)));    // 1,3,5
+
+public interface IEntity { int Id { get; } }
+public record User(int Id, string Name) : IEntity;
+
+public class Repository<T> where T : IEntity
+{
+    private readonly Dictionary<int, T> _items = new();
+    public void Add(T item) => _items[item.Id] = item;
+    public T? GetById(int id) => _items.TryGetValue(id, out var v) ? v : default;
+    public int Count => _items.Count;
+}
+
+public static class Util
+{
+    public static T MaxOf<T>(T a, T b) where T : IComparable<T> =>
+        a.CompareTo(b) >= 0 ? a : b;
+
+    public static T Sum<T>(IEnumerable<T> items) where T : INumber<T>
+    {
+        T total = T.Zero;
+        foreach (var x in items) total += x;
+        return total;
+    }
+
+    public static string ToTitleCase(this string s) =>
+        string.Join(" ", s.Split(' ').Select(w => w.Length == 0 ? w : char.ToUpper(w[0]) + w[1..]));
+
+    public static IEnumerable<T> EveryNth<T>(this IEnumerable<T> source, int n)
+    {
+        int i = 0;
+        foreach (var item in source)
+            if (i++ % n == 0) yield return item;
+    }
+}
+--- exercise
+`IEnumerable<T>` 에 대한 확장 메서드 `Chunk` 와 비슷한 `Batch<T>(this IEnumerable<T> source, int size)` 를 `yield return` 으로 작성해, 1~10을 3개씩 묶어 출력하세요. (참고: .NET 6+ 에는 내장 `Chunk` 가 있습니다)
+--- solution
+foreach (var batch in Enumerable.Range(1, 10).Batch(3))
+    Console.WriteLine(string.Join(",", batch));
+// 1,2,3 / 4,5,6 / 7,8,9 / 10
+
+public static class Ext
+{
+    public static IEnumerable<List<T>> Batch<T>(this IEnumerable<T> source, int size)
+    {
+        var bucket = new List<T>(size);
+        foreach (var item in source)
+        {
+            bucket.Add(item);
+            if (bucket.Count == size)
+            {
+                yield return bucket;
+                bucket = new List<T>(size);
+            }
+        }
+        if (bucket.Count > 0) yield return bucket;
+    }
+}
+--- quiz
+? 확장 메서드를 정의하는 조건으로 옳은 것은?
++ static 클래스의 static 메서드이며 첫 매개변수 앞에 this를 붙인다
+- 대상 클래스를 상속해야 한다
+- partial 클래스여야 한다
+- 인터페이스에만 정의할 수 있다
+! 원래 타입을 수정하거나 상속하지 않고도 메서드를 추가한 것처럼 사용할 수 있습니다.
+? `where T : IComparable<T>` 제약의 효과는?
+- T가 숫자여야 한다
++ T가 IComparable<T>를 구현해야 하므로 메서드 안에서 CompareTo를 호출할 수 있다
+- T가 클래스여야 한다
+- T를 비교할 수 없게 한다
+! 제약 덕분에 컴파일러가 해당 멤버의 존재를 보장합니다.
+
+=== 고급 | async | 비동기 프로그래밍: async/await와 Task
+C#은 `async` / `await` 를 처음 대중화한 언어입니다. I/O 작업(네트워크, 파일, DB)을 기다리는 동안 **스레드를 차단하지 않아** 서버는 더 많은 요청을, UI 앱은 멈추지 않고 동작할 수 있습니다.
+
+## 핵심
+- `async Task<T>` 메서드: 비동기적으로 T를 반환. 반환값이 없으면 `Task`
+- `await`: 작업이 끝날 때까지 기다리되 스레드는 다른 일을 함
+- `Task.WhenAll(...)`: 여러 작업을 동시에 실행하고 모두 기다림, `Task.WhenAny`: 가장 먼저 끝난 것
+- `CancellationToken`: 작업 취소
+- `Task.Run`: CPU 작업을 스레드 풀로 넘김
+- `IAsyncEnumerable<T>` + `await foreach`: 비동기 스트림
+
+> `async void` 는 이벤트 핸들러 외에는 쓰지 마세요(예외를 잡을 수 없음). `.Result` 나 `.Wait()` 로 동기 대기하면 교착 상태가 생길 수 있습니다.
+--- code
+using System.Diagnostics;
+
+async Task<string> FetchAsync(string name, int ms, CancellationToken ct = default)
+{
+    Console.WriteLine($"{name} 요청 시작");
+    await Task.Delay(ms, ct);             // 네트워크 대기를 흉내
+    return $"{name} 응답 ({ms}ms)";
+}
+
+var sw = Stopwatch.StartNew();
+string[] results = await Task.WhenAll(
+    FetchAsync("A", 300), FetchAsync("B", 200), FetchAsync("C", 100));
+Console.WriteLine(string.Join(", ", results));
+Console.WriteLine($"총 {sw.ElapsedMilliseconds}ms (순차였다면 600ms)");
+
+using var cts = new CancellationTokenSource(150);
+try
+{
+    await FetchAsync("느린 서버", 1000, cts.Token);
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("시간 초과로 취소됨");
+}
+
+await foreach (var n in CountAsync(3))
+    Console.WriteLine($"스트림 값: {n}");
+
+int heavy = await Task.Run(() => Enumerable.Range(1, 1_000_000).Sum(x => x % 7));
+Console.WriteLine($"CPU 작업 결과: {heavy}");
+
+async IAsyncEnumerable<int> CountAsync(int n)
+{
+    for (int i = 1; i <= n; i++)
+    {
+        await Task.Delay(50);
+        yield return i;
+    }
+}
+--- exercise
+URL 목록(문자열 5개)을 받아, 각 "다운로드"를 `Task.Delay(Random.Shared.Next(100, 500))` 로 흉내 내는 비동기 메서드를 만들고 `Task.WhenAll` 로 동시에 실행한 뒤, 가장 먼저 끝난 작업은 `Task.WhenAny` 로 따로 출력해 보세요.
+--- solution
+string[] urls = { "a.com", "b.com", "c.com", "d.com", "e.com" };
+
+async Task<string> Download(string url)
+{
+    int ms = Random.Shared.Next(100, 500);
+    await Task.Delay(ms);
+    return $"{url} ({ms}ms)";
+}
+
+var tasks = urls.Select(Download).ToList();
+var first = await Task.WhenAny(tasks);
+Console.WriteLine($"가장 빠른 응답: {await first}");
+var all = await Task.WhenAll(tasks);
+Console.WriteLine(string.Join("\n", all));
+--- quiz
+? 반환값이 없는 비동기 메서드의 권장 반환 타입은?
+- `async void`
++ `async Task`
+- `void`
+- `Thread`
+! async void는 예외를 호출자가 잡을 수 없어 이벤트 핸들러에서만 사용합니다.
+? 서로 독립적인 비동기 작업 3개를 동시에 실행하고 모두 완료될 때까지 기다리는 방법은?
++ `await Task.WhenAll(t1, t2, t3)`
+- 각각 `.Result` 로 대기
+- `Thread.Sleep` 사용
+- `await Task.WhenAny(t1, t2, t3)`
+! WhenAny는 하나만 끝나면 반환합니다.

@@ -1,0 +1,856 @@
+@id typescript
+@name TypeScript
+@badge TS
+@color #3178c6
+@difficulty 3
+@category 웹,범용
+@year 2012
+@uses 대규모 웹 프론트엔드 · Node.js 백엔드 · 라이브러리 개발 · 풀스택(Next.js)
+@desc JavaScript에 정적 타입을 더한 상위 집합 언어입니다. 컴파일 단계에서 오류를 잡아 주어 대규모 프로젝트에서 사실상 표준이 되었습니다. JavaScript를 먼저 익힌 뒤 배우는 것을 추천합니다.
+
+=== 입문 | intro | 타입스크립트란? 설치와 첫 컴파일
+타입스크립트(TypeScript)는 마이크로소프트가 만든 **JavaScript의 상위 집합(superset)** 입니다. 모든 JS 코드는 유효한 TS 코드이며, 여기에 **타입 표기**를 추가할 수 있습니다. 브라우저나 Node.js는 TS를 직접 실행하지 않으므로, `tsc` 컴파일러가 타입을 검사한 뒤 일반 JS로 변환합니다.
+
+## 왜 쓰나요?
+- 오타, 잘못된 인자, `undefined` 접근 같은 버그를 **실행 전에** 발견
+- 에디터 자동 완성과 리팩터링이 정확해짐
+- 타입이 곧 문서 역할을 해서 협업이 쉬워짐
+
+## 시작하기
+1. `npm install -D typescript` 로 설치
+2. `npx tsc --init` 으로 `tsconfig.json` 생성 (`"strict": true` 권장)
+3. `npx tsc` 로 컴파일 → `.js` 파일 생성 후 `node` 로 실행
+4. 빠르게 실험하려면 `npx tsx app.ts` 또는 Deno/Bun처럼 TS를 바로 실행하는 런타임 사용
+
+> 타입은 **컴파일 시점에만** 존재하고 변환된 JS에서는 사라집니다(타입 소거). 그래서 런타임 성능에는 영향이 없습니다.
+--- code
+// hello.ts
+function greet(name: string): string {
+  return `안녕하세요, ${name}님!`;
+}
+
+console.log(greet("길동"));
+// greet(42);
+// ❌ 컴파일 오류: Argument of type 'number' is not assignable to parameter of type 'string'.
+
+const user = { name: "영희", age: 28 };
+// console.log(user.nmae);
+// ❌ 컴파일 오류: Property 'nmae' does not exist. Did you mean 'name'?
+console.log(user.name.toUpperCase());
+--- exercise
+두 숫자를 받아 큰 값을 반환하는 함수 `max(a: number, b: number): number` 를 작성하세요. 그리고 일부러 `max("1", 2)` 를 호출하는 줄을 추가해 어떤 컴파일 오류가 나는지 확인해 보세요(확인 후 주석 처리).
+--- solution
+function max(a: number, b: number): number {
+  return a > b ? a : b;
+}
+console.log(max(3, 7));   // 7
+// max("1", 2);
+// ❌ Argument of type 'string' is not assignable to parameter of type 'number'.
+--- quiz
+? 타입스크립트 코드가 실제로 실행되는 방식은?
+- 브라우저가 TS를 직접 해석한다
++ 컴파일러가 타입을 검사한 뒤 JavaScript로 변환하여 실행한다
+- 자바 가상 머신에서 실행된다
+- 기계어로 컴파일되어 실행된다
+! tsc 등의 도구가 타입 정보를 제거한 JS를 만들어 냅니다.
+? 다음 중 옳은 설명은?
++ 모든 유효한 JavaScript 코드는 TypeScript 코드이기도 하다
+- 타입 표기는 실행 속도를 크게 높인다
+- 타입 정보는 런타임에도 그대로 남아 검사된다
+- TypeScript는 Node.js에서만 사용할 수 있다
+! TS는 JS의 상위 집합이며, 타입은 컴파일 후 사라집니다.
+
+=== 입문 | basic-types | 기본 타입과 타입 추론
+## 기본 타입
+- `string`, `number`, `boolean`, `bigint`, `symbol`
+- `null`, `undefined`
+- 배열: `number[]` 또는 `Array<number>`
+- 튜플: `[string, number]` — 길이와 위치별 타입이 고정
+- `any`: 타입 검사를 끄는 탈출구 (가급적 사용 금지)
+- `unknown`: 무엇이든 담을 수 있지만, 사용 전 **타입 확인을 강제**하는 안전한 any
+- `void`: 반환값 없음, `never`: 절대 반환하지 않음(항상 throw 등)
+
+## 타입 추론
+`let count = 0` 처럼 초기값이 있으면 TS가 `number` 로 **자동 추론**합니다. 모든 곳에 타입을 쓸 필요는 없고, 함수 매개변수와 공개 API 위주로 명시하면 됩니다.
+
+## 리터럴 타입
+`const dir = "left"` 의 타입은 `string` 이 아니라 `"left"` 입니다. 리터럴 타입을 유니온으로 묶으면 허용 값 목록을 만들 수 있습니다: `type Dir = "left" | "right"`
+--- code
+let title: string = "타입스크립트";
+let count = 0;              // number로 추론
+// count = "열";            // ❌ string은 number에 할당 불가
+let done: boolean = false;
+
+const scores: number[] = [90, 85, 77];
+const pair: [string, number] = ["길동", 30];
+const [who, age] = pair;
+
+let data: unknown = JSON.parse('{"x": 1}');
+// data.x;                  // ❌ unknown은 바로 사용 불가
+if (typeof data === "object" && data !== null && "x" in data) {
+  console.log((data as { x: number }).x);
+}
+
+type Direction = "up" | "down" | "left" | "right";
+function move(d: Direction): void {
+  console.log(`${d} 방향으로 이동`);
+}
+move("up");
+// move("forward");         // ❌ 허용되지 않는 값
+
+function fail(msg: string): never {
+  throw new Error(msg);
+}
+console.log(title, count, done, scores, who, age);
+--- exercise
+`type Size = "S" | "M" | "L"` 을 정의하고, 사이즈와 수량(`number`)을 받아 가격을 반환하는 함수를 작성하세요. S=10000, M=12000, L=15000원입니다. 반환 타입을 명시하세요.
+--- solution
+type Size = "S" | "M" | "L";
+
+function price(size: Size, qty: number): number {
+  const table: Record<Size, number> = { S: 10000, M: 12000, L: 15000 };
+  return table[size] * qty;
+}
+console.log(price("M", 3));   // 36000
+--- quiz
+? `any` 와 `unknown` 의 차이로 옳은 것은?
+- 완전히 같다
++ unknown은 사용 전에 타입을 좁히도록 강제한다
+- any는 숫자만 담을 수 있다
+- unknown은 null을 담을 수 없다
+! unknown 값은 typeof 검사 등으로 타입을 확인한 후에야 메서드 호출 등이 가능합니다.
+? `let x = 10;` 에서 x의 타입은?
+- `any`
++ `number`
+- `10`
+- `unknown`
+! let은 재할당 가능하므로 리터럴 10이 아니라 number로 넓혀서 추론됩니다. (const였다면 10)
+
+=== 입문 | functions | 함수 타입
+함수에는 매개변수 타입과 반환 타입을 붙입니다. 반환 타입은 보통 추론되지만 공개 함수에는 명시하는 것이 좋습니다.
+
+## 다양한 매개변수
+- 선택적 매개변수: `name?: string` (값이 없으면 `undefined`)
+- 기본값: `greeting = "안녕"` (타입 자동 추론)
+- 나머지 매개변수: `...nums: number[]`
+
+## 함수 타입 표현
+`(a: number, b: number) => number` 처럼 함수 자체의 타입을 정의해 콜백 등에 사용합니다.
+
+## 오버로드
+같은 함수가 입력 타입에 따라 다른 타입을 반환할 때, 여러 개의 시그니처를 선언할 수 있습니다.
+--- code
+function greet(name?: string, greeting = "안녕하세요"): string {
+  return `${greeting}, ${name ?? "손님"}님`;
+}
+console.log(greet(), greet("길동"), greet("영희", "반가워요"));
+
+function sum(...nums: number[]): number {
+  return nums.reduce((a, b) => a + b, 0);
+}
+
+type BinaryOp = (a: number, b: number) => number;
+const ops: Record<string, BinaryOp> = {
+  "+": (a, b) => a + b,   // a, b 타입이 문맥으로 추론됨
+  "*": (a, b) => a * b,
+};
+console.log(sum(1, 2, 3), ops["*"](4, 5));
+
+function applyTwice<T>(fn: (x: T) => T, value: T): T {
+  return fn(fn(value));
+}
+console.log(applyTwice(x => x + 3, 10));         // 16
+console.log(applyTwice(s => s + "!", "와"));     // 와!!
+
+// 오버로드
+function parse(input: string): number;
+function parse(input: number): string;
+function parse(input: string | number): string | number {
+  return typeof input === "string" ? Number(input) : String(input);
+}
+const n = parse("42");   // number
+const s = parse(42);     // string
+console.log(n + 1, s.length);
+--- exercise
+배열과 콜백을 받아 조건을 만족하는 원소의 개수를 세는 함수 `countIf` 를 작성하세요. 시그니처는 `(arr: number[], pred: (n: number) => boolean) => number` 입니다. 짝수 개수를 세어 출력해 보세요.
+--- solution
+function countIf(arr: number[], pred: (n: number) => boolean): number {
+  let count = 0;
+  for (const n of arr) if (pred(n)) count++;
+  return count;
+}
+console.log(countIf([1, 2, 3, 4, 6], n => n % 2 === 0));   // 3
+--- quiz
+? `function f(x?: number)` 에서 함수 안의 `x` 의 타입은?
+- `number`
++ `number | undefined`
+- `any`
+- `number | null`
+! 선택적 매개변수는 전달되지 않으면 undefined이므로 유니온 타입이 됩니다.
+? 함수 타입 `(s: string) => void` 에 해당하는 것은?
++ 문자열을 받고 의미 있는 값을 반환하지 않는 함수
+- 문자열을 반환하는 함수
+- 매개변수가 없는 함수
+- void를 받는 함수
+! void는 반환값을 사용하지 않음을 의미합니다.
+
+=== 초급 | interfaces | 객체 타입: interface와 type
+객체의 모양(shape)을 정의하는 방법은 두 가지입니다.
+
+- `interface User { name: string }` — 확장(`extends`)과 **선언 병합**이 가능, 객체 구조 정의에 주로 사용
+- `type User = { name: string }` — 유니온, 튜플, 함수 등 **모든 타입에 별칭**을 붙일 수 있음
+
+둘은 대부분 바꿔 쓸 수 있습니다. 팀 규칙을 정해 일관되게 사용하세요.
+
+## 속성 수식어
+- `email?: string` 선택적 속성
+- `readonly id: number` 읽기 전용
+- 인덱스 시그니처: `[key: string]: number` — 임의의 키 허용
+
+## 구조적 타이핑
+TS는 이름이 아니라 **구조**로 타입 호환을 판단합니다. 필요한 속성을 모두 가진 객체라면 어떤 클래스에서 왔든 호환됩니다(덕 타이핑).
+--- code
+interface Address {
+  city: string;
+  zip?: string;
+}
+
+interface User {
+  readonly id: number;
+  name: string;
+  email?: string;
+  address: Address;
+}
+
+interface Admin extends User {
+  permissions: string[];
+}
+
+const admin: Admin = {
+  id: 1,
+  name: "길동",
+  address: { city: "서울" },
+  permissions: ["read", "write"],
+};
+// admin.id = 2;   // ❌ 읽기 전용
+
+type Point = { x: number; y: number };
+type Point3D = Point & { z: number };     // 교차 타입
+const p: Point3D = { x: 1, y: 2, z: 3 };
+
+// 구조적 타이핑
+function printPoint(pt: Point) {
+  console.log(`(${pt.x}, ${pt.y})`);
+}
+printPoint(p);                       // Point3D는 Point의 모든 속성을 가짐 → OK
+
+type Scores = { [subject: string]: number };
+const s: Scores = { math: 90, english: 85 };
+console.log(admin.permissions, s.math, admin.email?.length ?? 0);
+--- exercise
+`Product` 인터페이스(`id: number`(읽기 전용), `name: string`, `price: number`, `tags?: string[]`)를 정의하고, `Product[]` 를 받아 총 가격을 반환하는 함수와 `"sale"` 태그를 가진 상품 이름만 반환하는 함수를 작성하세요.
+--- solution
+interface Product {
+  readonly id: number;
+  name: string;
+  price: number;
+  tags?: string[];
+}
+
+const totalPrice = (items: Product[]): number =>
+  items.reduce((sum, p) => sum + p.price, 0);
+
+const onSale = (items: Product[]): string[] =>
+  items.filter(p => p.tags?.includes("sale")).map(p => p.name);
+
+const items: Product[] = [
+  { id: 1, name: "키보드", price: 50000, tags: ["sale"] },
+  { id: 2, name: "모니터", price: 300000 },
+];
+console.log(totalPrice(items), onSale(items));   // 350000 ['키보드']
+--- quiz
+? `interface` 에는 있고 `type` 별칭에는 없는 기능은?
+- 객체 구조 정의
+- 선택적 속성
++ 같은 이름으로 여러 번 선언하면 자동으로 합쳐지는 선언 병합
+- 다른 타입 확장
+! interface는 선언 병합을 지원합니다. type은 & 교차 타입으로 확장할 수 있습니다.
+? TypeScript의 타입 호환 판단 기준은?
+- 클래스 이름이 같아야 한다
++ 필요한 속성 구조를 갖추었는지(구조적 타이핑)
+- 같은 파일에 선언되었는지
+- 생성자가 같은지
+! TS는 구조적(structural) 타입 시스템을 사용합니다.
+
+=== 초급 | unions | 유니온과 타입 좁히기
+**유니온 타입** `A | B` 는 "A 또는 B"를 뜻합니다. 유니온 값을 사용하려면 어떤 타입인지 확인하는 **타입 좁히기(narrowing)** 가 필요합니다.
+
+## 좁히기 방법
+- `typeof x === "string"`
+- `x instanceof Date`
+- `"prop" in obj`
+- 동등 비교 / truthy 검사: `if (x !== null)`
+- 사용자 정의 타입 가드: `function isFish(p): p is Fish`
+
+## 판별 유니온 (Discriminated Union)
+각 타입에 공통의 리터럴 속성(예: `kind`)을 두면 `switch` 로 깔끔하게 분기할 수 있습니다. `default` 에서 `never` 를 이용하면 **새 케이스를 추가하고 처리를 빠뜨렸을 때 컴파일 오류**가 납니다(완전성 검사).
+--- code
+function format(value: string | number | Date): string {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number") return value.toFixed(2);
+  return value.toISOString().slice(0, 10);   // 여기서는 Date로 좁혀짐
+}
+console.log(format("  hi "), format(3.14159), format(new Date(2026, 0, 15)));
+
+type Shape =
+  | { kind: "circle"; radius: number }
+  | { kind: "rect"; width: number; height: number }
+  | { kind: "triangle"; base: number; height: number };
+
+function area(s: Shape): number {
+  switch (s.kind) {
+    case "circle":
+      return Math.PI * s.radius ** 2;
+    case "rect":
+      return s.width * s.height;
+    case "triangle":
+      return (s.base * s.height) / 2;
+    default: {
+      const exhaustive: never = s;   // 케이스를 빠뜨리면 여기서 컴파일 오류
+      return exhaustive;
+    }
+  }
+}
+console.log(area({ kind: "rect", width: 3, height: 4 }));
+
+interface Cat { meow(): void }
+interface Dog { bark(): void }
+function isCat(a: Cat | Dog): a is Cat {
+  return "meow" in a;
+}
+const pet: Cat | Dog = { bark: () => console.log("멍!") };
+if (isCat(pet)) pet.meow(); else pet.bark();
+--- exercise
+API 응답을 나타내는 판별 유니온 `Result = { status: "ok"; data: string[] } | { status: "error"; message: string } | { status: "loading" }` 을 정의하고, 상태별로 다른 문자열을 반환하는 `render(r: Result): string` 을 switch와 never 완전성 검사로 작성하세요.
+--- solution
+type Result =
+  | { status: "ok"; data: string[] }
+  | { status: "error"; message: string }
+  | { status: "loading" };
+
+function render(r: Result): string {
+  switch (r.status) {
+    case "ok": return `항목 ${r.data.length}개`;
+    case "error": return `오류: ${r.message}`;
+    case "loading": return "불러오는 중...";
+    default: {
+      const _never: never = r;
+      return _never;
+    }
+  }
+}
+console.log(render({ status: "ok", data: ["a", "b"] }));
+console.log(render({ status: "error", message: "404" }));
+--- quiz
+? 판별 유니온에서 `default` 분기에 `const x: never = s;` 를 두는 목적은?
+- 실행 속도 향상
++ 처리하지 않은 케이스가 생기면 컴파일 오류로 알려 주기 위해
+- 런타임 오류를 무시하기 위해
+- any 타입으로 변환하기 위해
+! 모든 케이스를 처리했다면 s는 never로 좁혀지고, 빠뜨린 케이스가 있으면 할당 오류가 납니다.
+? `function isStr(x: unknown): x is string` 같은 함수를 무엇이라 하나요?
+- 제네릭 함수
++ 사용자 정의 타입 가드
+- 오버로드
+- 데코레이터
+! 반환 타입의 `x is string` 은 true를 반환하면 x가 string임을 컴파일러에 알려 줍니다.
+
+=== 초급 | classes | 클래스와 접근 제어자
+TS 클래스는 JS 클래스에 타입과 **접근 제어자**를 더합니다.
+
+- `public`(기본값), `private`(클래스 내부만), `protected`(자식 클래스까지)
+- `readonly`: 생성 후 변경 불가
+- **매개변수 속성**: `constructor(private name: string)` 처럼 생성자 매개변수에 수식어를 붙이면 필드 선언과 할당이 한 번에 됩니다.
+- `abstract class`: 직접 인스턴스화할 수 없고, 추상 메서드는 자식이 반드시 구현
+- `implements`: 클래스가 인터페이스를 따르는지 검사
+
+> TS의 `private` 은 컴파일 시점 검사입니다. 런타임에서도 숨기려면 JS의 `#field` 를 사용하세요.
+--- code
+interface Payable {
+  pay(amount: number): string;
+}
+
+abstract class Employee implements Payable {
+  private static nextId = 1;
+  readonly id: number;
+
+  constructor(public name: string, protected baseSalary: number) {
+    this.id = Employee.nextId++;
+  }
+
+  abstract monthlyPay(): number;
+
+  pay(amount: number = this.monthlyPay()): string {
+    return `${this.name}에게 ${amount.toLocaleString()}원 지급`;
+  }
+}
+
+class FullTime extends Employee {
+  monthlyPay(): number {
+    return Math.round(this.baseSalary / 12);
+  }
+}
+
+class Contractor extends Employee {
+  constructor(name: string, private hourly: number, private hours: number) {
+    super(name, 0);
+  }
+  monthlyPay(): number {
+    return this.hourly * this.hours;
+  }
+}
+
+const staff: Employee[] = [new FullTime("길동", 60_000_000), new Contractor("영희", 30_000, 120)];
+staff.forEach(e => console.log(e.id, e.pay()));
+// new Employee("x", 0);   // ❌ 추상 클래스는 인스턴스화 불가
+// staff[0].baseSalary;    // ❌ protected
+--- exercise
+`interface Shape { area(): number; name: string }` 을 구현하는 `Circle`, `Square` 클래스를 매개변수 속성을 이용해 작성하고, 배열에 담아 넓이 합계를 출력하세요.
+--- solution
+interface Shape {
+  name: string;
+  area(): number;
+}
+
+class Circle implements Shape {
+  name = "원";
+  constructor(private r: number) {}
+  area() { return Math.PI * this.r ** 2; }
+}
+
+class Square implements Shape {
+  name = "정사각형";
+  constructor(private side: number) {}
+  area() { return this.side ** 2; }
+}
+
+const shapes: Shape[] = [new Circle(1), new Square(3)];
+console.log(shapes.reduce((s, x) => s + x.area(), 0).toFixed(2));   // 12.14
+--- quiz
+? `constructor(private name: string) {}` 의 효과는?
+- name을 전역 변수로 만든다
++ private 필드 name을 선언하고 인자 값으로 초기화한다
+- name 매개변수를 무시한다
+- 컴파일 오류가 난다
+! 매개변수 속성(parameter property) 문법입니다.
+? `protected` 멤버에 접근할 수 있는 곳은?
+- 어디서나
+- 같은 파일
++ 선언한 클래스와 그 자식 클래스 내부
+- 선언한 클래스 내부만
+! private은 선언 클래스 내부만, protected는 자식 클래스까지 허용합니다.
+
+=== 중급 | generics | 제네릭
+**제네릭**은 타입을 매개변수처럼 받아, 여러 타입에서 재사용할 수 있는 코드를 만듭니다. `any` 를 쓰면 타입 정보가 사라지지만, 제네릭은 **입력과 출력의 타입 관계를 유지**합니다.
+
+## 문법
+- 함수: `function first<T>(arr: T[]): T | undefined`
+- 인터페이스/타입: `interface Box<T> { value: T }`
+- 클래스: `class Stack<T> { ... }`
+- 제약 조건: `<T extends { length: number }>` — T가 반드시 length를 가져야 함
+- `keyof` 와 함께: `<T, K extends keyof T>(obj: T, key: K): T[K]`
+- 기본 타입: `<T = string>`
+
+대부분의 경우 호출 시 타입 인자를 쓰지 않아도 **추론**됩니다.
+--- code
+function first<T>(arr: T[]): T | undefined {
+  return arr[0];
+}
+const a = first([1, 2, 3]);        // number | undefined
+const b = first(["x", "y"]);       // string | undefined
+
+function longest<T extends { length: number }>(x: T, y: T): T {
+  return x.length >= y.length ? x : y;
+}
+console.log(longest("apple", "kiwi"), longest([1, 2], [1, 2, 3]));
+
+function getProp<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key];
+}
+const user = { name: "길동", age: 30 };
+const age = getProp(user, "age");   // number
+// getProp(user, "email");          // ❌ "email"은 keyof User가 아님
+
+class Stack<T> {
+  private items: T[] = [];
+  push(item: T): this { this.items.push(item); return this; }
+  pop(): T | undefined { return this.items.pop(); }
+  get size() { return this.items.length; }
+}
+const st = new Stack<string>().push("a").push("b");
+console.log(st.pop(), st.size);
+
+interface ApiResponse<T> {
+  data: T;
+  error?: string;
+}
+const res: ApiResponse<{ id: number }[]> = { data: [{ id: 1 }] };
+console.log(a, b, age, res.data[0].id);
+--- exercise
+배열과 키 추출 함수를 받아 그룹화하는 제네릭 함수 `groupBy<T, K extends string>(items: T[], keyFn: (item: T) => K): Record<K, T[]>` 를 작성하세요. 단어 배열을 첫 글자로 그룹화해 보세요.
+--- solution
+function groupBy<T, K extends string>(items: T[], keyFn: (item: T) => K): Record<K, T[]> {
+  const result = {} as Record<K, T[]>;
+  for (const item of items) {
+    const key = keyFn(item);
+    (result[key] ??= []).push(item);
+  }
+  return result;
+}
+console.log(groupBy(["apple", "avocado", "banana", "blueberry", "cherry"], w => w[0]));
+// { a: ['apple','avocado'], b: ['banana','blueberry'], c: ['cherry'] }
+--- quiz
+? `any[]` 대신 `T[]` 제네릭을 쓰는 가장 큰 이점은?
+- 실행 속도가 빨라진다
++ 입력 타입과 반환 타입의 관계가 유지되어 타입 안정성이 보장된다
+- 런타임에 타입 검사를 해 준다
+- 코드가 짧아진다
+! first([1,2])의 반환 타입이 number로 정확히 추론됩니다.
+? `<K extends keyof T>` 의 의미는?
++ K는 T의 속성 이름 중 하나여야 한다
+- K는 T를 상속한 클래스여야 한다
+- K는 T와 같은 타입이다
+- K는 문자열이면 무엇이든 된다
+! keyof T는 T의 모든 키로 이루어진 유니온 타입입니다.
+
+=== 중급 | utility-types | 유틸리티 타입과 매핑 타입
+TS는 기존 타입을 변형하는 **내장 유틸리티 타입**을 제공합니다.
+
+- `Partial<T>`: 모든 속성을 선택적으로 (수정 API의 입력 등)
+- `Required<T>`: 모든 속성을 필수로
+- `Readonly<T>`: 모든 속성을 읽기 전용으로
+- `Pick<T, K>` / `Omit<T, K>`: 일부 속성만 고르기 / 빼기
+- `Record<K, V>`: 키 K, 값 V인 객체
+- `ReturnType<F>`, `Parameters<F>`: 함수의 반환/매개변수 타입 추출
+- `Awaited<T>`: Promise가 감싼 타입 추출
+- `NonNullable<T>`: null, undefined 제거
+
+## 매핑 타입
+`{ [K in keyof T]: ... }` 문법으로 직접 만들 수 있습니다. 실제로 `Partial` 은 `{ [K in keyof T]?: T[K] }` 로 정의되어 있습니다.
+
+## 조건부 타입
+`T extends U ? X : Y` 형태로 타입 수준의 if문을 작성합니다. `infer` 로 타입의 일부를 추출할 수 있습니다.
+--- code
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+}
+
+type UserUpdate = Partial<Omit<User, "id">>;      // id 제외, 나머지 선택적
+type PublicUser = Omit<User, "password">;
+type LoginForm = Pick<User, "email" | "password">;
+
+function updateUser(id: number, patch: UserUpdate) {
+  console.log(`사용자 ${id} 수정:`, patch);
+}
+updateUser(1, { name: "새이름" });                // email 없어도 OK
+
+const roles: Record<"admin" | "guest", string[]> = {
+  admin: ["read", "write"],
+  guest: ["read"],
+};
+
+// 직접 만드는 매핑 타입
+type Nullable<T> = { [K in keyof T]: T[K] | null };
+type Getters<T> = { [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K] };
+type UserGetters = Getters<Pick<User, "name">>;   // { getName: () => string }
+
+// 조건부 타입과 infer
+type ElementType<T> = T extends (infer E)[] ? E : T;
+type A = ElementType<string[]>;    // string
+type B = ElementType<number>;      // number
+
+async function fetchUser() { return { id: 1, name: "길동" }; }
+type Fetched = Awaited<ReturnType<typeof fetchUser>>;   // { id: number; name: string }
+
+const pub: PublicUser = { id: 1, name: "길동", email: "a@b.c" };
+const g: UserGetters = { getName: () => pub.name };
+console.log(roles.admin, g.getName());
+--- exercise
+`interface Config { host: string; port: number; debug: boolean }` 이 있을 때, (1) 모든 속성이 선택적인 `PartialConfig`, (2) `host` 만 필수이고 나머지는 선택적인 `MinimalConfig` 타입을 만들고, 기본값과 병합하는 `createConfig(c: MinimalConfig): Config` 를 작성하세요.
+--- solution
+interface Config { host: string; port: number; debug: boolean }
+
+type PartialConfig = Partial<Config>;
+type MinimalConfig = Pick<Config, "host"> & Partial<Omit<Config, "host">>;
+
+const defaults: Omit<Config, "host"> = { port: 8080, debug: false };
+
+function createConfig(c: MinimalConfig): Config {
+  return { ...defaults, ...c };
+}
+console.log(createConfig({ host: "localhost", debug: true }));
+// { port: 8080, debug: true, host: 'localhost' }
+--- quiz
+? 기존 타입에서 특정 속성만 **제외**한 타입을 만드는 유틸리티는?
+- `Pick`
++ `Omit`
+- `Partial`
+- `Exclude`
+! Omit<T, K>는 T에서 K 속성을 뺀 타입입니다. Exclude는 유니온 멤버를 제거합니다.
+? `ReturnType<typeof fn>` 은 무엇을 반환하나요?
+- fn의 매개변수 타입 튜플
++ fn이 반환하는 값의 타입
+- fn 자체의 타입
+- fn을 호출한 결과값
+! 타입 수준에서 함수의 반환 타입을 추출합니다(값이 아님).
+
+=== 중급 | modules-async | 모듈, 비동기와 타입
+## 비동기 함수의 타입
+`async` 함수의 반환 타입은 항상 `Promise<T>` 입니다. `fetch` 의 `res.json()` 은 `Promise<any>` 를 반환하므로, 결과에 원하는 타입을 지정하되 **외부 데이터는 런타임 검증**이 필요하다는 점을 기억하세요(타입은 실제 데이터를 보장하지 않음). 실무에서는 zod 같은 스키마 검증 라이브러리를 많이 씁니다.
+
+## 모듈과 타입 내보내기
+- `export interface User {}` / `import type { User } from "./types"`
+- `import type` 은 타입만 가져오고 컴파일 결과에서 완전히 제거됩니다.
+
+## 선언 파일 (.d.ts)
+타입이 없는 JS 라이브러리에 타입 정보를 제공합니다. 대부분 `npm i -D @types/라이브러리명` 으로 설치할 수 있습니다.
+
+## enum vs 유니온
+`enum Color { Red, Green }` 은 런타임 객체를 생성합니다. 단순 상수 목록이라면 **문자열 리터럴 유니온** 이나 `as const` 객체가 더 가볍고 선호되는 추세입니다.
+--- code
+// types.ts
+export interface Post {
+  id: number;
+  title: string;
+  tags: string[];
+}
+
+// api.ts
+// import type { Post } from "./types";
+
+const fakeDb: Post[] = [
+  { id: 1, title: "TS 입문", tags: ["ts"] },
+  { id: 2, title: "제네릭 정복", tags: ["ts", "advanced"] },
+];
+
+async function getPost(id: number): Promise<Post> {
+  await new Promise(r => setTimeout(r, 100));
+  const post = fakeDb.find(p => p.id === id);
+  if (!post) throw new Error(`글 ${id} 없음`);
+  return post;
+}
+
+// 런타임 타입 검증 (간단한 수동 가드)
+function isPost(x: unknown): x is Post {
+  return typeof x === "object" && x !== null &&
+    typeof (x as Post).id === "number" && typeof (x as Post).title === "string";
+}
+
+const STATUS = { Draft: "draft", Published: "published" } as const;
+type Status = typeof STATUS[keyof typeof STATUS];   // "draft" | "published"
+
+async function main() {
+  const posts = await Promise.all([1, 2].map(getPost));
+  console.log(posts.map(p => p.title));
+  const raw: unknown = JSON.parse('{"id": 3, "title": "외부 데이터"}');
+  if (isPost(raw)) console.log("검증 통과:", raw.title);
+  const s: Status = STATUS.Published;
+  console.log(s);
+  try { await getPost(99); } catch (e) { console.log((e as Error).message); }
+}
+main();
+--- exercise
+`fetchJson<T>(url: string, guard: (x: unknown) => x is T): Promise<T>` 형태의 함수를 설계해 보세요. 실제 fetch 대신 `JSON.parse` 로 흉내내고, 가드가 실패하면 에러를 던지게 하세요.
+--- solution
+async function fetchJson<T>(body: string, guard: (x: unknown) => x is T): Promise<T> {
+  const data: unknown = JSON.parse(body);   // 실제로는: await (await fetch(url)).json()
+  if (!guard(data)) throw new Error("응답 형식이 올바르지 않습니다");
+  return data;
+}
+
+interface User { name: string }
+const isUser = (x: unknown): x is User =>
+  typeof x === "object" && x !== null && typeof (x as User).name === "string";
+
+fetchJson('{"name":"길동"}', isUser).then(u => console.log(u.name));
+fetchJson('{"nick":"x"}', isUser).catch(e => console.log(e.message));
+--- quiz
+? `async function f(): ??? { return 1; }` 의 올바른 반환 타입은?
+- `number`
++ `Promise<number>`
+- `Async<number>`
+- `void`
+! async 함수는 항상 Promise로 감싼 값을 반환합니다.
+? `import type { User } from "./types"` 의 특징은?
++ 타입만 가져오며 컴파일된 JS에서는 완전히 제거된다
+- 런타임에 타입 검사를 수행한다
+- 모듈 전체를 동적으로 로드한다
+- 클래스 인스턴스를 생성할 수 있다
+! 타입 전용 import는 번들 크기에 영향을 주지 않습니다.
+
+=== 고급 | advanced-types | 고급 타입: 템플릿 리터럴, 조건부, 재귀
+타입스크립트의 타입 시스템은 매우 강력해서 **타입 수준 프로그래밍**이 가능합니다.
+
+## 템플릿 리터럴 타입
+`` `on${Capitalize<Event>}` `` 처럼 문자열 타입을 조합합니다. 이벤트 이름, CSS 단위, 라우트 경로 등에 유용합니다.
+
+## 분배 조건부 타입
+유니온에 조건부 타입을 적용하면 각 멤버에 **분배**되어 적용됩니다. `Exclude<T, U>` 가 이렇게 구현되어 있습니다: `T extends U ? never : T`
+
+## 재귀 타입
+타입이 자기 자신을 참조할 수 있어 JSON, 트리, 깊은 Readonly 등을 표현할 수 있습니다.
+
+## satisfies 연산자 (TS 4.9+)
+값이 타입을 만족하는지 검사하면서도, **추론된 구체적인 타입은 유지**합니다.
+
+> 타입 체조는 강력하지만 과하면 읽기 어렵습니다. 라이브러리 경계나 반복되는 패턴에만 쓰세요.
+--- code
+type EventName = "click" | "focus" | "submit";
+type Handlers = { [E in EventName as `on${Capitalize<E>}`]: (e: Event) => void };
+// { onClick: ..., onFocus: ..., onSubmit: ... }
+
+type CssUnit = "px" | "rem" | "%";
+type CssValue = `${number}${CssUnit}`;
+const w: CssValue = "100px";
+// const bad: CssValue = "100pt";   // ❌
+
+type MyExclude<T, U> = T extends U ? never : T;
+type Primitive = MyExclude<string | number | boolean | null, null>; // string | number | boolean
+
+type DeepReadonly<T> = {
+  readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K];
+};
+type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+
+const settings: DeepReadonly<{ ui: { theme: string } }> = { ui: { theme: "dark" } };
+// settings.ui.theme = "light";     // ❌ 깊은 읽기 전용
+
+// 라우트 파라미터 추출
+type Params<P extends string> =
+  P extends `${string}:${infer Name}/${infer Rest}` ? Name | Params<Rest>
+  : P extends `${string}:${infer Name}` ? Name : never;
+type R = Params<"/users/:userId/posts/:postId">;   // "userId" | "postId"
+
+const palette = {
+  primary: "#4f46e5",
+  spacing: [4, 8, 16],
+} satisfies Record<string, string | number[]>;
+palette.spacing.map(n => n * 2);   // number[]로 유지되어 map 사용 가능
+
+const data: Json = { a: [1, "two", { b: null }] };
+console.log(w, settings.ui.theme, JSON.stringify(data));
+--- exercise
+객체 타입 `T` 의 모든 속성 이름 앞에 `set` 을 붙이고 값 타입을 받는 함수로 바꾼 `Setters<T>` 를 만드세요. 예: `{ name: string }` → `{ setName: (v: string) => void }`.
+--- solution
+type Setters<T> = {
+  [K in keyof T as `set${Capitalize<string & K>}`]: (value: T[K]) => void;
+};
+
+interface Person { name: string; age: number }
+const state: Person = { name: "길동", age: 30 };
+const setters: Setters<Person> = {
+  setName: v => { state.name = v; },
+  setAge: v => { state.age = v; },
+};
+setters.setAge(31);
+console.log(state);   // { name: '길동', age: 31 }
+--- quiz
+? `type T = Exclude<"a" | "b" | "c", "a">` 의 결과는?
+- `"a"`
++ `"b" | "c"`
+- `never`
+- `"a" | "b" | "c"`
+! 분배 조건부 타입으로 각 멤버에 적용되어 "a"만 never로 제거됩니다.
+? `satisfies` 연산자의 장점은?
+- 런타임에 타입을 검사한다
++ 타입 적합성을 검사하면서도 값의 구체적인 추론 타입을 유지한다
+- any 타입으로 변환한다
+- 객체를 읽기 전용으로 만든다
+! `: Type` 주석은 타입을 넓혀 버리지만 satisfies는 검사만 합니다.
+
+=== 고급 | patterns | 실전 패턴: 타입 안전한 상태 관리
+지금까지 배운 기능을 조합해 **타입 안전한 리듀서(reducer)** 와 **이벤트 이미터**를 만들어 봅시다. React의 `useReducer`, Redux 등에서 그대로 쓰이는 패턴입니다.
+
+## 핵심 아이디어
+- 액션을 판별 유니온으로 정의 → 각 case에서 payload 타입이 자동으로 좁혀짐
+- 이벤트 이름과 페이로드 타입을 매핑하는 인터페이스 + `keyof` 제네릭 → 잘못된 이벤트 이름이나 데이터를 컴파일 시점에 차단
+- `readonly` 와 불변 업데이트로 예측 가능한 상태 변화
+
+## 엄격 모드 권장 설정
+`tsconfig.json` 에서 `"strict": true`, `"noUncheckedIndexedAccess": true` 를 켜면 배열/객체 인덱스 접근 결과에 `undefined` 가능성이 포함되어 더 많은 버그를 잡을 수 있습니다.
+--- code
+interface Todo { readonly id: number; text: string; done: boolean }
+interface State { readonly todos: readonly Todo[]; filter: "all" | "done" | "active" }
+
+type Action =
+  | { type: "add"; text: string }
+  | { type: "toggle"; id: number }
+  | { type: "remove"; id: number }
+  | { type: "setFilter"; filter: State["filter"] };
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "add":
+      return { ...state, todos: [...state.todos, { id: Date.now() + Math.random(), text: action.text, done: false }] };
+    case "toggle":
+      return { ...state, todos: state.todos.map(t => t.id === action.id ? { ...t, done: !t.done } : t) };
+    case "remove":
+      return { ...state, todos: state.todos.filter(t => t.id !== action.id) };
+    case "setFilter":
+      return { ...state, filter: action.filter };
+  }
+}
+
+// 타입 안전한 이벤트 이미터
+interface Events {
+  login: { userId: string };
+  logout: undefined;
+  error: { code: number; message: string };
+}
+class Emitter<E> {
+  private handlers: { [K in keyof E]?: ((p: E[K]) => void)[] } = {};
+  on<K extends keyof E>(event: K, fn: (payload: E[K]) => void) {
+    (this.handlers[event] ??= []).push(fn);
+  }
+  emit<K extends keyof E>(event: K, payload: E[K]) {
+    this.handlers[event]?.forEach(fn => fn(payload));
+  }
+}
+
+let s: State = { todos: [], filter: "all" };
+s = reducer(s, { type: "add", text: "타입스크립트 복습" });
+s = reducer(s, { type: "toggle", id: s.todos[0]!.id });
+console.log(s.todos);
+
+const bus = new Emitter<Events>();
+bus.on("error", e => console.log(`에러 ${e.code}: ${e.message}`));
+bus.emit("error", { code: 500, message: "서버 오류" });
+// bus.emit("error", { code: "500" });   // ❌ 타입 불일치
+// bus.emit("signup", {});               // ❌ 없는 이벤트
+--- exercise
+위 리듀서에 `{ type: "clearDone" }` 액션(완료된 할 일 모두 삭제)을 추가해 보세요. 유니온에만 추가하고 switch에 case를 빠뜨리면 어떤 일이 생기는지(반환 타입 오류) 확인한 뒤 구현하세요.
+--- solution
+// Action 유니온에 추가:
+//   | { type: "clearDone" }
+// case를 빠뜨리면 함수가 undefined를 반환할 수 있게 되어
+// "Function lacks ending return statement and return type does not include 'undefined'." 오류 발생
+
+// reducer의 switch에 추가:
+//   case "clearDone":
+//     return { ...state, todos: state.todos.filter(t => !t.done) };
+--- quiz
+? 판별 유니온 액션을 쓰는 리듀서에서 `case "add":` 블록 안의 `action` 타입은?
+- Action 유니온 전체
++ `{ type: "add"; text: string }` 으로 좁혀진 타입
+- any
+- never
+! type 속성으로 판별되어 해당 멤버 타입으로 좁혀지므로 action.text에 안전하게 접근할 수 있습니다.
+? `noUncheckedIndexedAccess` 옵션을 켜면 `arr[0]` 의 타입은?
+- 원소 타입 그대로
++ 원소 타입 | undefined
+- any
+- never
+! 인덱스가 범위를 벗어날 수 있음을 타입에 반영해 더 안전한 코드를 유도합니다.

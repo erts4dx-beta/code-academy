@@ -1,0 +1,923 @@
+@id cpp
+@name C++
+@badge C++
+@color #00599c
+@difficulty 5
+@category 시스템
+@year 1985
+@uses 게임 엔진(Unreal) · 고성능 서버 · 금융 트레이딩 · 브라우저/컴파일러
+@desc C의 성능에 객체지향, 제네릭, 현대적 추상화를 더한 언어입니다. 배우기는 어렵지만 성능이 중요한 거의 모든 분야에서 쓰입니다. C를 먼저 익히면 좋지만 필수는 아닙니다.
+
+=== 입문 | hello | C++ 시작하기: iostream과 네임스페이스
+C++는 비야네 스트롭스트룹이 "클래스가 있는 C"로 시작한 언어입니다. C와 대부분 호환되지만, **모던 C++(C++11 이후)** 는 사실상 다른 언어처럼 안전하고 편리한 스타일을 제공합니다. 이 커리큘럼은 모던 C++(C++17/20) 스타일을 따릅니다.
+
+## 컴파일
+`g++ -std=c++20 -Wall -O2 main.cpp -o main && ./main` (또는 clang++, Visual Studio)
+
+## 기본 요소
+- `#include <iostream>`: 입출력 스트림
+- `std::cout << 값`: 출력, `std::cin >> 변수`: 입력, `std::endl` 또는 `'\n'`: 줄바꿈 (`'\n'` 이 더 빠름)
+- `std::` 는 표준 라이브러리 **네임스페이스**입니다. `using namespace std;` 는 짧은 예제에선 편하지만 헤더 파일이나 큰 프로젝트에서는 이름 충돌 때문에 피합니다.
+- `std::string`: C 문자열보다 안전하고 편리한 문자열 클래스
+--- code
+#include <iostream>
+#include <string>
+
+int main() {
+    std::cout << "Hello, World!\n";
+    std::string name = "길동";
+    int year = 2026;
+    std::cout << "안녕하세요, " << name << "님! 올해는 " << year << "년입니다.\n";
+
+    std::string lang = "C";
+    lang += "++";                       // 문자열 연결
+    std::cout << lang << " 길이: " << lang.size() << '\n';
+
+    auto pi = 3.14159;                  // auto: 타입 추론 (double)
+    std::cout << "pi = " << pi << '\n';
+
+    std::cout << "이름을 입력하세요: ";
+    std::string input;
+    std::getline(std::cin, input);      // 공백 포함 한 줄 입력
+    std::cout << "반가워요, " << input << "!\n";
+    return 0;
+}
+--- exercise
+두 정수를 입력받아(`std::cin`) 합, 차, 곱, 몫(실수)을 각각 한 줄씩 출력하는 프로그램을 작성하세요. 몫은 `static_cast<double>` 을 사용하세요.
+--- solution
+#include <iostream>
+
+int main() {
+    int a, b;
+    std::cout << "두 정수: ";
+    std::cin >> a >> b;
+    std::cout << "합: " << a + b << '\n'
+              << "차: " << a - b << '\n'
+              << "곱: " << a * b << '\n';
+    if (b != 0)
+        std::cout << "몫: " << static_cast<double>(a) / b << '\n';
+    return 0;
+}
+--- quiz
+? `std::cout` 에서 `std::` 가 의미하는 것은?
+- 표준 입력 장치
++ 표준 라이브러리 네임스페이스
+- 정적 변수
+- 문자열 타입
+! std 네임스페이스 안의 cout을 사용한다는 뜻입니다.
+? 공백이 포함된 한 줄 전체를 읽는 방법은?
+- `std::cin >> s;`
++ `std::getline(std::cin, s);`
+- `scanf("%s", s);`
+- `std::cin.get();`
+! cin >> 는 공백에서 입력을 끊습니다.
+
+=== 입문 | basics | 자료형, 참조, 제어문
+C++는 C의 자료형과 제어문을 그대로 쓰면서 몇 가지를 더합니다.
+
+## 추가된 기능
+- `bool` 이 기본 타입으로 내장
+- **참조(reference)**: `int& r = x;` — x의 별명. 선언 시 반드시 초기화하고, 다른 대상으로 바꿀 수 없음
+- 범위 기반 for: `for (const auto& x : container)`
+- 균일 초기화: `int n{5};` — 축소 변환(예: double → int)을 컴파일 오류로 잡아 줌
+- `static_cast<T>(값)`: 명시적이고 검색하기 쉬운 형 변환
+
+## 참조로 전달
+함수 매개변수를 `T&` 로 받으면 복사 없이 원본을 수정할 수 있고, `const T&` 로 받으면 **복사 비용 없이 읽기 전용**으로 전달합니다. 큰 객체(문자열, 벡터)는 `const&` 로 넘기는 것이 기본입니다.
+--- code
+#include <iostream>
+#include <string>
+#include <vector>
+
+void increase(int& value) { value += 10; }                 // 원본 수정
+void print(const std::string& s) { std::cout << s << '\n'; } // 복사 없이 읽기
+
+int main() {
+    int x{5};
+    int& ref = x;
+    ref = 7;
+    std::cout << "x = " << x << '\n';     // 7
+
+    increase(x);
+    std::cout << "x = " << x << '\n';     // 17
+
+    // int bad{3.7};                       // ❌ 축소 변환 컴파일 오류
+    int ok = static_cast<int>(3.7);       // 3
+
+    std::vector<int> nums{4, 8, 15, 16, 23, 42};
+    int sum = 0;
+    for (const auto& n : nums) sum += n;
+    std::cout << "합계: " << sum << ", ok=" << ok << '\n';
+
+    for (auto& n : nums) n *= 2;          // 참조로 받아 원소 수정
+    std::cout << "첫 원소: " << nums[0] << '\n';   // 8
+
+    bool even = (sum % 2 == 0);
+    std::cout << std::boolalpha << "짝수? " << even << '\n';
+    print("const 참조로 전달");
+    return 0;
+}
+--- exercise
+두 문자열을 참조로 받아 서로 바꾸는 `void swapStr(std::string& a, std::string& b)` 를 작성하세요. 그리고 `std::vector<int>` 를 const 참조로 받아 최댓값을 반환하는 함수도 작성하세요.
+--- solution
+#include <iostream>
+#include <string>
+#include <vector>
+
+void swapStr(std::string& a, std::string& b) {
+    std::string tmp = a;
+    a = b;
+    b = tmp;            // 실무에서는 std::swap(a, b)
+}
+
+int maxOf(const std::vector<int>& v) {
+    int best = v.at(0);
+    for (int x : v) if (x > best) best = x;
+    return best;
+}
+
+int main() {
+    std::string a = "사과", b = "바나나";
+    swapStr(a, b);
+    std::cout << a << ' ' << b << '\n';            // 바나나 사과
+    std::cout << maxOf({3, 9, 2, 7}) << '\n';      // 9
+}
+--- quiz
+? `void f(const std::string& s)` 로 매개변수를 받는 이유는?
++ 복사 비용 없이 전달하면서 함수가 원본을 수정하지 못하게 하기 위해
+- 문자열을 복사해서 안전하게 쓰기 위해
+- 원본을 수정하기 위해
+- 문자열을 상수로 바꾸기 위해
+! const 참조는 큰 객체를 효율적이고 안전하게 전달하는 표준 방식입니다.
+? 참조(reference)에 대한 설명으로 틀린 것은?
+- 선언할 때 반드시 초기화해야 한다
++ 나중에 다른 변수를 가리키도록 바꿀 수 있다
+- 원래 변수의 별명처럼 동작한다
+- 함수 매개변수로 자주 사용된다
+! 참조는 한 번 바인딩되면 대상을 바꿀 수 없습니다. 대입은 대상의 값을 바꿉니다.
+
+=== 입문 | functions | 함수: 오버로딩, 기본 인자, 람다
+## 함수 기능
+- **오버로딩**: 이름이 같고 매개변수가 다른 함수 여러 개
+- **기본 인자**: `void log(const std::string& msg, int level = 1)`
+- `inline`, `constexpr`: `constexpr` 함수는 가능하면 **컴파일 시점에 계산**
+- 여러 값 반환: `std::pair`, `std::tuple`, 구조체 + **구조적 바인딩** `auto [a, b] = f();` (C++17)
+
+## 람다 표현식
+`[캡처](매개변수) { 본문 }` 형태의 익명 함수입니다.
+- `[]` 아무것도 캡처하지 않음
+- `[x]` x를 값으로 복사, `[&x]` x를 참조로
+- `[=]` 모두 값으로, `[&]` 모두 참조로
+- 알고리즘 함수(`std::sort`, `std::count_if`)와 함께 자주 쓰입니다.
+--- code
+#include <iostream>
+#include <string>
+#include <tuple>
+#include <vector>
+#include <algorithm>
+
+int area(int w, int h) { return w * h; }
+double area(double r) { return 3.14159 * r * r; }    // 오버로딩
+
+void greet(const std::string& name, const std::string& msg = "안녕하세요") {
+    std::cout << msg << ", " << name << "님\n";
+}
+
+constexpr long long fact(int n) { return n <= 1 ? 1 : n * fact(n - 1); }
+
+std::tuple<int, int, double> stats(const std::vector<int>& v) {
+    auto [mn, mx] = std::minmax_element(v.begin(), v.end());
+    double avg = 0;
+    for (int x : v) avg += x;
+    return {*mn, *mx, avg / v.size()};
+}
+
+int main() {
+    std::cout << area(3, 4) << ' ' << area(1.0) << '\n';
+    greet("길동");
+    greet("영희", "반가워요");
+
+    constexpr auto f10 = fact(10);                    // 컴파일 시점 계산
+    static_assert(f10 == 3628800);
+
+    auto [lo, hi, avg] = stats({5, 1, 9, 3});         // 구조적 바인딩
+    std::cout << lo << ' ' << hi << ' ' << avg << '\n';
+
+    int threshold = 4;
+    std::vector<int> v{1, 7, 3, 9, 5};
+    auto bigCount = std::count_if(v.begin(), v.end(), [threshold](int x) { return x > threshold; });
+    int total = 0;
+    std::for_each(v.begin(), v.end(), [&total](int x) { total += x; });
+    std::cout << "4보다 큰 수: " << bigCount << "개, 합계: " << total << '\n';
+
+    auto add = [](auto a, auto b) { return a + b; };  // 제네릭 람다
+    std::cout << add(1, 2) << ' ' << add(std::string("C"), std::string("++")) << '\n';
+}
+--- exercise
+`std::vector<std::string>` 을 람다를 이용해 **문자열 길이 오름차순**, 길이가 같으면 사전순으로 정렬하세요. 그리고 길이가 5 이상인 단어의 개수를 `count_if` 와 람다로 세세요.
+--- solution
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
+
+int main() {
+    std::vector<std::string> words{"banana", "kiwi", "apple", "fig", "cherry", "date"};
+    std::sort(words.begin(), words.end(), [](const std::string& a, const std::string& b) {
+        if (a.size() != b.size()) return a.size() < b.size();
+        return a < b;
+    });
+    for (const auto& w : words) std::cout << w << ' ';
+    std::cout << '\n';   // fig date kiwi apple banana cherry
+
+    auto n = std::count_if(words.begin(), words.end(),
+                           [](const std::string& w) { return w.size() >= 5; });
+    std::cout << n << '\n';   // 3
+}
+--- quiz
+? 람다 `[&total](int x) { total += x; }` 에서 `&total` 의 의미는?
+- total을 복사해서 사용
++ 바깥 변수 total을 참조로 캡처하여 수정 가능
+- total의 주소를 매개변수로 받음
+- total을 상수로 만듦
+! 참조 캡처이므로 람다 안에서의 변경이 바깥 변수에 반영됩니다.
+? `constexpr` 함수의 특징은?
++ 인자가 상수식이면 컴파일 시점에 결과를 계산할 수 있다
+- 항상 런타임에만 실행된다
+- 반환값을 바꿀 수 없다
+- 멤버 함수에만 쓸 수 있다
+! static_assert 등 컴파일 시점이 필요한 곳에서도 사용할 수 있습니다.
+
+=== 초급 | classes | 클래스, 생성자, 소멸자
+## 클래스
+- `public` / `private` / `protected` 접근 제어 (class는 기본 private, struct는 기본 public)
+- **생성자**: 객체 초기화. **멤버 초기화 리스트** `: name_(name), age_(age)` 사용 권장
+- **소멸자** `~ClassName()`: 객체가 사라질 때 자동 호출 → 자원 정리
+- `const` 멤버 함수: `int age() const` — 객체를 수정하지 않음을 보장
+- 연산자 오버로딩: `operator+`, `operator<<` 등
+
+## RAII (Resource Acquisition Is Initialization)
+C++의 가장 중요한 관용구입니다. **자원(메모리, 파일, 락)을 생성자에서 얻고 소멸자에서 해제**하면, 스코프를 벗어날 때(예외가 나더라도) 자동으로 정리됩니다. `std::string`, `std::vector`, `std::unique_ptr`, `std::lock_guard` 가 모두 RAII입니다.
+--- code
+#include <cmath>
+#include <iostream>
+#include <string>
+
+class Vector2 {
+public:
+    Vector2(double x = 0, double y = 0) : x_(x), y_(y) {}   // 초기화 리스트
+
+    double x() const { return x_; }
+    double y() const { return y_; }
+    double length() const { return std::sqrt(x_ * x_ + y_ * y_); }
+
+    Vector2 operator+(const Vector2& o) const { return {x_ + o.x_, y_ + o.y_}; }
+    Vector2 operator*(double k) const { return {x_ * k, y_ * k}; }
+    bool operator==(const Vector2& o) const = default;          // C++20
+
+    friend std::ostream& operator<<(std::ostream& os, const Vector2& v) {
+        return os << "(" << v.x_ << ", " << v.y_ << ")";
+    }
+
+private:
+    double x_, y_;
+};
+
+class Timer {                                   // RAII 예시
+public:
+    explicit Timer(std::string label) : label_(std::move(label)) {
+        std::cout << "[" << label_ << "] 시작\n";
+    }
+    ~Timer() { std::cout << "[" << label_ << "] 종료\n"; }
+private:
+    std::string label_;
+};
+
+int main() {
+    Vector2 a{3, 4}, b{1, 2};
+    std::cout << a + b << " 길이=" << a.length() << '\n';     // (4, 6) 길이=5
+    std::cout << (a * 2) << ' ' << std::boolalpha << (a == Vector2{3, 4}) << '\n';
+
+    {
+        Timer t("블록");
+        std::cout << "작업 중...\n";
+    }                                           // 여기서 소멸자 자동 호출
+    std::cout << "블록 밖\n";
+}
+--- exercise
+`BankAccount` 클래스를 만드세요. private 멤버로 소유자와 잔액을 가지며, 생성자 초기화 리스트, `deposit`, `withdraw`(잔액 부족 시 `false` 반환), const 멤버 함수 `balance()`, 그리고 `operator<<` 를 구현하세요.
+--- solution
+#include <iostream>
+#include <string>
+
+class BankAccount {
+public:
+    BankAccount(std::string owner, long long balance = 0)
+        : owner_(std::move(owner)), balance_(balance) {}
+
+    void deposit(long long amount) { if (amount > 0) balance_ += amount; }
+    bool withdraw(long long amount) {
+        if (amount > balance_) return false;
+        balance_ -= amount;
+        return true;
+    }
+    long long balance() const { return balance_; }
+
+    friend std::ostream& operator<<(std::ostream& os, const BankAccount& a) {
+        return os << a.owner_ << ": " << a.balance_ << "원";
+    }
+private:
+    std::string owner_;
+    long long balance_;
+};
+
+int main() {
+    BankAccount acc("길동", 10000);
+    acc.deposit(5000);
+    std::cout << std::boolalpha << acc.withdraw(20000) << '\n';  // false
+    std::cout << acc << '\n';                                     // 길동: 15000원
+}
+--- quiz
+? RAII 관용구의 핵심 아이디어는?
+- 모든 변수를 전역으로 선언한다
++ 자원을 객체의 수명에 묶어 소멸자에서 자동으로 해제한다
+- 가비지 컬렉터를 사용한다
+- 예외를 사용하지 않는다
+! 스코프를 벗어나면 소멸자가 확실히 호출되므로 누수와 해제 누락을 막습니다.
+? `int getAge() const;` 의 `const` 의미는?
+- 반환값이 상수
++ 이 멤버 함수는 객체의 상태를 수정하지 않는다
+- 함수를 오버라이딩할 수 없다
+- 정적 함수이다
+! const 객체에서는 const 멤버 함수만 호출할 수 있습니다.
+
+=== 초급 | stl | STL 컨테이너
+**STL(Standard Template Library)** 은 C++ 표준 라이브러리의 핵심으로, 컨테이너·반복자·알고리즘으로 구성됩니다.
+
+## 주요 컨테이너
+- `std::vector<T>`: 동적 배열. **기본 선택**. 끝에 추가 `push_back` / `emplace_back`
+- `std::array<T, N>`: 고정 크기 배열
+- `std::string`: 문자열
+- `std::map<K, V>`: 정렬된 키-값 (트리, O(log n))
+- `std::unordered_map<K, V>`: 해시 테이블 (평균 O(1))
+- `std::set`, `std::unordered_set`: 중복 없는 집합
+- `std::deque`, `std::queue`, `std::stack`, `std::priority_queue`
+
+## 접근 시 주의
+`v[i]` 는 범위 검사를 하지 않지만 `v.at(i)` 는 범위를 벗어나면 예외를 던집니다. `map[key]` 는 키가 없으면 **기본값으로 새 항목을 만듭니다** — 존재 확인만 하려면 `contains` (C++20) 또는 `find` 를 쓰세요.
+--- code
+#include <iostream>
+#include <map>
+#include <unordered_map>
+#include <set>
+#include <vector>
+#include <queue>
+#include <string>
+
+int main() {
+    std::vector<int> v{5, 3, 8};
+    v.push_back(1);
+    v.emplace_back(9);
+    std::cout << "크기 " << v.size() << ", 마지막 " << v.back() << '\n';
+
+    std::map<std::string, int> ages{{"영희", 31}, {"철수", 25}};
+    ages["길동"] = 30;
+    for (const auto& [name, age] : ages)                 // 키 정렬 순서
+        std::cout << name << ":" << age << ' ';
+    std::cout << '\n';
+    std::cout << std::boolalpha << ages.contains("민수") << '\n';   // false
+
+    std::unordered_map<char, int> freq;
+    for (char c : std::string("mississippi")) freq[c]++;
+    std::cout << "s의 개수: " << freq['s'] << '\n';       // 4
+
+    std::set<int> s{3, 1, 3, 2};
+    std::cout << "set 크기: " << s.size() << ", 최솟값: " << *s.begin() << '\n';
+
+    std::priority_queue<int> pq;                          // 최대 힙
+    for (int x : {4, 10, 2}) pq.push(x);
+    std::cout << "가장 큰 값: " << pq.top() << '\n';      // 10
+
+    try {
+        std::cout << v.at(100);
+    } catch (const std::out_of_range& e) {
+        std::cout << "범위 오류 잡음\n";
+    }
+}
+--- exercise
+`std::vector<std::string>` 에 담긴 단어들의 빈도를 `std::map` 으로 세어 출력하고, `std::set` 을 사용해 중복을 제거한 단어 목록을 정렬된 순서로 출력하세요.
+--- solution
+#include <iostream>
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
+
+int main() {
+    std::vector<std::string> words{"cpp", "go", "cpp", "rust", "go", "cpp"};
+    std::map<std::string, int> count;
+    for (const auto& w : words) ++count[w];
+    for (const auto& [w, c] : count) std::cout << w << ": " << c << '\n';
+    // cpp: 3, go: 2, rust: 1
+
+    std::set<std::string> unique(words.begin(), words.end());
+    for (const auto& w : unique) std::cout << w << ' ';
+    std::cout << '\n';
+}
+--- quiz
+? `std::map<std::string,int> m;` 에서 존재하지 않는 키로 `m["x"]` 를 읽으면?
+- 예외가 발생한다
++ 값이 0인 새 항목 "x"가 추가된다
+- 컴파일 오류가 난다
+- 정의되지 않은 동작이다
+! operator[]는 키가 없으면 기본 생성된 값을 삽입합니다. 조회만 하려면 find/contains/at을 쓰세요.
+? 평균 O(1) 조회가 필요하고 순서는 상관없을 때 적합한 컨테이너는?
+- `std::map`
++ `std::unordered_map`
+- `std::vector`
+- `std::list`
+! unordered_map은 해시 테이블 기반입니다.
+
+=== 초급 | algorithms | 반복자와 알고리즘
+`<algorithm>` 헤더는 정렬, 검색, 변환 등 **100개가 넘는 검증된 알고리즘**을 제공합니다. 직접 반복문을 짜기 전에 표준 알고리즘이 있는지 먼저 확인하세요.
+
+## 반복자(iterator)
+컨테이너의 원소를 가리키는 일반화된 포인터입니다. `begin()` 은 첫 원소, `end()` 는 **마지막 다음** 위치를 가리킵니다. 알고리즘은 `[begin, end)` 범위를 받습니다.
+
+## 자주 쓰는 알고리즘
+- `sort`, `stable_sort`, `reverse`
+- `find`, `find_if`, `count_if`, `any_of`, `all_of`
+- `transform`, `accumulate`(`<numeric>`), `min_element`, `max_element`
+- `remove_if` + `erase` (erase-remove 관용구) — C++20에서는 `std::erase_if`
+
+## Ranges (C++20)
+`std::ranges::sort(v)` 처럼 범위를 통째로 넘기고, `views::filter | views::transform` 파이프라인으로 지연 평가 처리를 할 수 있습니다.
+--- code
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <numeric>
+#include <ranges>
+#include <vector>
+
+int main() {
+    std::vector<int> v{7, 2, 9, 4, 4, 1, 8};
+
+    std::sort(v.begin(), v.end());
+    auto it = std::find(v.begin(), v.end(), 4);
+    std::cout << "4의 위치: " << std::distance(v.begin(), it) << '\n';
+
+    int sum = std::accumulate(v.begin(), v.end(), 0);
+    auto [mn, mx] = std::minmax_element(v.begin(), v.end());
+    std::cout << "합 " << sum << ", 최소 " << *mn << ", 최대 " << *mx << '\n';
+
+    std::vector<int> squared(v.size());
+    std::transform(v.begin(), v.end(), squared.begin(), [](int x) { return x * x; });
+
+    std::erase_if(v, [](int x) { return x % 2 == 0; });   // 짝수 제거 (C++20)
+    for (int x : v) std::cout << x << ' ';                // 1 7 9
+    std::cout << '\n';
+
+    std::ranges::sort(squared, std::ranges::greater{});   // 내림차순
+    std::cout << "제곱 내림차순 첫 값: " << squared.front() << '\n';
+
+    // ranges 파이프라인: 1~20 중 3의 배수를 제곱해 앞의 4개
+    for (int x : std::views::iota(1, 21)
+                 | std::views::filter([](int n) { return n % 3 == 0; })
+                 | std::views::transform([](int n) { return n * n; })
+                 | std::views::take(4))
+        std::cout << x << ' ';                             // 9 36 81 144
+    std::cout << '\n';
+}
+--- exercise
+`std::vector<int> v{3, -1, 4, -1, 5, -9, 2, 6}` 에서 (1) 음수를 모두 제거하고, (2) 남은 수를 내림차순 정렬하고, (3) 모든 원소의 합을 `accumulate` 로 구해 출력하세요.
+--- solution
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <numeric>
+#include <vector>
+
+int main() {
+    std::vector<int> v{3, -1, 4, -1, 5, -9, 2, 6};
+    std::erase_if(v, [](int x) { return x < 0; });
+    std::sort(v.begin(), v.end(), std::greater<int>());
+    for (int x : v) std::cout << x << ' ';            // 6 5 4 3 2
+    std::cout << "\n합: " << std::accumulate(v.begin(), v.end(), 0) << '\n';   // 20
+}
+--- quiz
+? `v.end()` 가 가리키는 위치는?
+- 마지막 원소
++ 마지막 원소의 다음(존재하지 않는 위치)
+- 첫 원소
+- nullptr
+! 반복자 범위는 반열린 구간 [begin, end)이므로 end는 역참조하면 안 됩니다.
+? C++20 이전에 vector에서 조건에 맞는 원소를 실제로 삭제하는 관용구는?
+- `std::remove_if` 만 호출
++ `v.erase(std::remove_if(...), v.end())`
+- `v.delete_if(...)`
+- `std::find` 후 `v.pop_back()`
+! remove_if는 남길 원소를 앞으로 모으고 새 끝을 반환할 뿐, 크기는 erase가 줄입니다.
+
+=== 중급 | smart-pointers | 스마트 포인터와 메모리 관리
+모던 C++에서는 `new` / `delete` 를 직접 쓰는 일이 거의 없습니다. 대신 **스마트 포인터**가 소유권을 표현하고 메모리를 자동으로 해제합니다.
+
+- `std::unique_ptr<T>`: **단독 소유**. 복사 불가, `std::move` 로 소유권 이전만 가능. 오버헤드 거의 없음 → 기본 선택
+- `std::shared_ptr<T>`: **공동 소유**. 참조 카운트가 0이 되면 해제
+- `std::weak_ptr<T>`: shared_ptr을 소유하지 않고 관찰. **순환 참조**로 인한 누수 방지
+- 생성은 `std::make_unique<T>(...)`, `std::make_shared<T>(...)` 를 사용
+
+## 상속과 다형성
+부모 클래스에 `virtual` 함수를 두고 자식이 `override` 합니다. 다형적으로 사용할 기반 클래스에는 반드시 **virtual 소멸자**가 있어야 합니다. 그렇지 않으면 부모 포인터로 삭제할 때 자식 소멸자가 호출되지 않습니다.
+--- code
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
+
+class Shape {
+public:
+    virtual ~Shape() = default;                 // 가상 소멸자 필수
+    virtual double area() const = 0;            // 순수 가상 함수 → 추상 클래스
+    virtual std::string name() const { return "도형"; }
+};
+
+class Circle : public Shape {
+public:
+    explicit Circle(double r) : r_(r) {}
+    double area() const override { return 3.14159 * r_ * r_; }
+    std::string name() const override { return "원"; }
+private:
+    double r_;
+};
+
+class Rect : public Shape {
+public:
+    Rect(double w, double h) : w_(w), h_(h) {}
+    double area() const override { return w_ * h_; }
+    std::string name() const override { return "사각형"; }
+private:
+    double w_, h_;
+};
+
+int main() {
+    std::vector<std::unique_ptr<Shape>> shapes;
+    shapes.push_back(std::make_unique<Circle>(1.0));
+    shapes.push_back(std::make_unique<Rect>(2, 3));
+    for (const auto& s : shapes)
+        std::cout << s->name() << ": " << s->area() << '\n';
+
+    auto p1 = std::make_unique<Circle>(2.0);
+    // auto p2 = p1;                            // ❌ unique_ptr은 복사 불가
+    auto p2 = std::move(p1);                    // 소유권 이전, p1은 이제 nullptr
+    std::cout << std::boolalpha << (p1 == nullptr) << '\n';
+
+    auto shared = std::make_shared<std::string>("공유 데이터");
+    {
+        auto copy = shared;
+        std::cout << "참조 수: " << shared.use_count() << '\n';   // 2
+    }
+    std::cout << "참조 수: " << shared.use_count() << '\n';       // 1
+    std::weak_ptr<std::string> observer = shared;
+    if (auto locked = observer.lock()) std::cout << *locked << '\n';
+}   // 모든 메모리가 자동으로 해제됨
+--- exercise
+`Animal` 추상 클래스(`virtual std::string sound() const = 0;`, 가상 소멸자)와 `Dog`, `Cat` 자식 클래스를 만들고, `std::vector<std::unique_ptr<Animal>>` 에 담아 모두 소리를 출력하세요.
+--- solution
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
+
+class Animal {
+public:
+    virtual ~Animal() = default;
+    virtual std::string sound() const = 0;
+};
+class Dog : public Animal {
+public:
+    std::string sound() const override { return "멍멍"; }
+};
+class Cat : public Animal {
+public:
+    std::string sound() const override { return "야옹"; }
+};
+
+int main() {
+    std::vector<std::unique_ptr<Animal>> zoo;
+    zoo.push_back(std::make_unique<Dog>());
+    zoo.push_back(std::make_unique<Cat>());
+    for (const auto& a : zoo) std::cout << a->sound() << '\n';
+}
+--- quiz
+? 소유권이 하나뿐인 동적 객체에 가장 적합한 스마트 포인터는?
++ `std::unique_ptr`
+- `std::shared_ptr`
+- `std::weak_ptr`
+- `auto_ptr`
+! unique_ptr은 오버헤드가 거의 없고 소유권이 명확합니다. auto_ptr은 C++17에서 제거되었습니다.
+? 다형적으로 사용할 기반 클래스에 virtual 소멸자가 없으면?
+- 컴파일 오류
++ 기반 클래스 포인터로 삭제할 때 파생 클래스 소멸자가 호출되지 않아 자원 누수가 생길 수 있다
+- 프로그램이 더 빨라진다
+- 아무 문제 없다
+! 정확히는 정의되지 않은 동작이며, 흔히 파생 클래스의 자원이 정리되지 않습니다.
+
+=== 중급 | templates | 템플릿과 제네릭 프로그래밍
+**템플릿**은 타입을 매개변수로 받아 여러 타입에 동작하는 코드를 만듭니다. STL 전체가 템플릿으로 만들어져 있습니다. 컴파일러가 사용된 타입마다 코드를 생성하므로(인스턴스화) **런타임 오버헤드가 없습니다**.
+
+## 종류
+- 함수 템플릿: `template <typename T> T maxOf(T a, T b)`
+- 클래스 템플릿: `template <typename T> class Stack`
+- 비타입 매개변수: `template <typename T, std::size_t N>`
+- 가변 인자 템플릿: `template <typename... Args>` + 폴드 표현식(C++17)
+
+## Concepts (C++20)
+템플릿 매개변수에 **요구 조건**을 붙입니다. 조건을 만족하지 않는 타입을 넘기면 읽기 쉬운 오류 메시지가 나옵니다: `template <std::integral T>` 또는 `requires` 절.
+--- code
+#include <concepts>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <stdexcept>
+
+template <typename T>
+T maxOf(T a, T b) { return a > b ? a : b; }
+
+template <typename T>
+class Stack {
+public:
+    void push(const T& v) { data_.push_back(v); }
+    T pop() {
+        if (data_.empty()) throw std::runtime_error("빈 스택");
+        T v = data_.back();
+        data_.pop_back();
+        return v;
+    }
+    bool empty() const { return data_.empty(); }
+    std::size_t size() const { return data_.size(); }
+private:
+    std::vector<T> data_;
+};
+
+template <typename... Args>
+auto sumAll(Args... args) { return (args + ...); }          // 폴드 표현식
+
+template <std::integral T>                                  // 정수 타입만 허용
+bool isEven(T n) { return n % 2 == 0; }
+
+template <typename T>
+concept Printable = requires(std::ostream& os, T v) { os << v; };
+
+void printAll(const Printable auto&... items) {
+    ((std::cout << items << ' '), ...);
+    std::cout << '\n';
+}
+
+int main() {
+    std::cout << maxOf(3, 7) << ' ' << maxOf(2.5, 1.5) << ' '
+              << maxOf(std::string("apple"), std::string("banana")) << '\n';
+
+    Stack<std::string> s;
+    s.push("첫째");
+    s.push("둘째");
+    std::cout << s.pop() << ", 남은 개수 " << s.size() << '\n';
+
+    std::cout << sumAll(1, 2, 3, 4) << ' ' << sumAll(1.5, 2.5) << '\n';  // 10 4
+    std::cout << std::boolalpha << isEven(10) << '\n';
+    // isEven(3.5);                // ❌ concept 불만족: double은 integral이 아님
+    printAll("C++", 20, 3.14, 'x');
+}
+--- exercise
+고정 크기 원형 버퍼 클래스 템플릿 `template <typename T, std::size_t N> class RingBuffer` 를 작성하세요. `push(const T&)` 는 가득 차면 가장 오래된 값을 덮어쓰고, `std::vector<T> items() const` 는 오래된 순서로 반환합니다.
+--- solution
+#include <array>
+#include <iostream>
+#include <vector>
+
+template <typename T, std::size_t N>
+class RingBuffer {
+public:
+    void push(const T& v) {
+        buf_[head_] = v;
+        head_ = (head_ + 1) % N;
+        if (count_ < N) ++count_;
+    }
+    std::vector<T> items() const {
+        std::vector<T> out;
+        std::size_t start = (head_ + N - count_) % N;
+        for (std::size_t i = 0; i < count_; ++i) out.push_back(buf_[(start + i) % N]);
+        return out;
+    }
+private:
+    std::array<T, N> buf_{};
+    std::size_t head_ = 0, count_ = 0;
+};
+
+int main() {
+    RingBuffer<int, 3> rb;
+    for (int i = 1; i <= 5; ++i) rb.push(i);
+    for (int x : rb.items()) std::cout << x << ' ';   // 3 4 5
+    std::cout << '\n';
+}
+--- quiz
+? 템플릿 코드의 성능 특성으로 옳은 것은?
++ 컴파일 시점에 타입별 코드가 생성되어 런타임 오버헤드가 없다
+- 런타임에 타입을 검사하므로 느리다
+- 가상 함수 테이블을 통해 호출된다
+- 인터프리터로 실행된다
+! 대신 코드 크기와 컴파일 시간이 늘어날 수 있습니다.
+? C++20 concepts의 주된 이점은?
+- 실행 속도 향상
++ 템플릿 인자에 대한 요구 조건을 명시하고 오류 메시지를 읽기 쉽게 만든다
+- 메모리 자동 관리
+- 매크로 대체
+! 조건을 만족하지 않는 타입을 사용하면 어떤 조건이 실패했는지 명확히 알려 줍니다.
+
+=== 고급 | move | 이동 의미론과 값 범주
+C++11의 **이동 의미론(move semantics)** 은 성능 혁신이었습니다. 곧 사라질 임시 객체의 자원(예: 동적 배열)을 **복사하지 않고 훔쳐 오는** 방식입니다.
+
+## 핵심 개념
+- **lvalue**: 이름이 있고 주소를 가질 수 있는 값 (변수)
+- **rvalue**: 임시 값 (`x + 1`, 함수가 반환한 임시 객체)
+- `T&&`: rvalue 참조 — 이동 생성자/이동 대입 연산자의 매개변수
+- `std::move(x)`: x를 rvalue로 **캐스팅**할 뿐, 실제 이동은 이동 생성자가 수행. 이동된 객체는 "유효하지만 지정되지 않은 상태"
+
+## Rule of Zero / Five
+- 자원을 직접 관리하지 않으면(스마트 포인터, STL 사용) 특수 멤버 함수를 **하나도 정의하지 않는다** (Rule of Zero) — 가장 권장
+- 직접 관리한다면 소멸자, 복사 생성자, 복사 대입, 이동 생성자, 이동 대입 **5개를 모두** 고려 (Rule of Five)
+
+> 함수에서 지역 객체를 값으로 반환하는 것은 비효율적이지 않습니다. 컴파일러가 **RVO(반환값 최적화)** 로 복사/이동 자체를 생략합니다. `return std::move(local);` 은 오히려 최적화를 방해합니다.
+--- code
+#include <cstring>
+#include <iostream>
+#include <utility>
+#include <vector>
+
+class Buffer {
+public:
+    explicit Buffer(std::size_t n) : size_(n), data_(new int[n]{}) {
+        std::cout << "생성 (" << n << ")\n";
+    }
+    ~Buffer() { delete[] data_; }
+
+    Buffer(const Buffer& o) : size_(o.size_), data_(new int[o.size_]) {          // 복사
+        std::memcpy(data_, o.data_, size_ * sizeof(int));
+        std::cout << "복사 (비쌈)\n";
+    }
+    Buffer(Buffer&& o) noexcept : size_(o.size_), data_(o.data_) {                // 이동
+        o.size_ = 0;
+        o.data_ = nullptr;                    // 원본은 비워 둠
+        std::cout << "이동 (저렴)\n";
+    }
+    Buffer& operator=(Buffer o) noexcept {    // copy-and-swap: 복사/이동 대입 통합
+        std::swap(size_, o.size_);
+        std::swap(data_, o.data_);
+        return *this;
+    }
+    std::size_t size() const { return size_; }
+
+private:
+    std::size_t size_;
+    int* data_;
+};
+
+Buffer makeBuffer() {
+    Buffer b(1000);
+    return b;                                 // RVO: 복사/이동 생략 가능
+}
+
+int main() {
+    Buffer a(10);
+    Buffer b = a;                             // 복사
+    Buffer c = std::move(a);                  // 이동: a는 이제 비어 있음
+    std::cout << "a.size=" << a.size() << " c.size=" << c.size() << '\n';
+
+    Buffer d = makeBuffer();
+
+    std::vector<Buffer> v;
+    v.reserve(2);
+    v.push_back(Buffer(5));                   // 임시 객체 → 이동
+    v.emplace_back(7);                        // 제자리 생성 → 복사/이동 없음
+}
+--- exercise
+`std::vector<std::string>` 에 긴 문자열을 추가할 때 `push_back(s)`, `push_back(std::move(s))`, `emplace_back(...)` 의 차이를 설명하는 주석과 함께 코드를 작성하고, move 후 원본 문자열 `s` 를 출력해 보세요(보통 빈 문자열이지만 표준은 "유효하지만 지정되지 않은 상태"만 보장).
+--- solution
+#include <iostream>
+#include <string>
+#include <vector>
+
+int main() {
+    std::vector<std::string> v;
+    std::string s(1000, 'x');
+
+    v.push_back(s);              // 복사: s는 그대로, 1000바이트 복사 발생
+    v.push_back(std::move(s));   // 이동: 내부 버퍼 포인터만 넘김, s는 비게 됨(구현상 보통 "")
+    v.emplace_back(500, 'y');    // 벡터 안에서 직접 생성: 임시 객체 없음
+
+    std::cout << "s 길이: " << s.size() << '\n';          // 보통 0
+    std::cout << "원소 수: " << v.size() << '\n';          // 3
+    s = "재사용 가능";                                      // 이동된 객체에 새 값 대입은 안전
+    std::cout << s << '\n';
+}
+--- quiz
+? `std::move(x)` 가 실제로 하는 일은?
+- x의 메모리를 즉시 해제한다
+- x를 다른 위치로 복사한다
++ x를 rvalue 참조로 캐스팅하여 이동 연산이 선택되게 한다
+- x를 nullptr로 만든다
+! 실제 자원 이전은 이동 생성자/이동 대입 연산자가 수행합니다.
+? 이동 생성자에 `noexcept` 를 붙이는 것이 중요한 이유는?
++ std::vector가 재할당할 때 noexcept 이동 생성자가 있어야 복사 대신 이동을 사용한다
+- 문법상 필수이기 때문
+- 예외를 자동으로 잡아 주기 때문
+- 컴파일 속도가 빨라지기 때문
+! 강한 예외 보장을 위해 vector는 이동이 예외를 던질 수 있으면 복사를 택합니다.
+
+=== 고급 | concurrency | 동시성: thread, mutex, async
+C++11부터 표준 라이브러리에 스레드 지원이 포함되었습니다.
+
+## 도구
+- `std::thread` / `std::jthread`(C++20, 소멸 시 자동 join + 중단 요청 지원)
+- `std::mutex` + `std::lock_guard` / `std::scoped_lock`: RAII 방식 잠금
+- `std::atomic<T>`: 락 없이 원자적 연산
+- `std::async` + `std::future`: 비동기 작업과 결과 받기
+- `std::condition_variable`: 스레드 간 신호 (생산자-소비자)
+
+## 주의점
+- **데이터 경쟁**(동기화 없이 여러 스레드가 같은 데이터에 쓰기)은 정의되지 않은 동작입니다.
+- 교착 상태(deadlock)를 피하려면 여러 뮤텍스를 `std::scoped_lock(m1, m2)` 로 한 번에 잠그세요.
+- 컴파일 시 `-pthread` 옵션이 필요할 수 있습니다.
+--- code
+#include <atomic>
+#include <future>
+#include <iostream>
+#include <mutex>
+#include <numeric>
+#include <thread>
+#include <vector>
+
+std::mutex coutMutex;
+
+void worker(int id, std::atomic<int>& counter) {
+    for (int i = 0; i < 10000; ++i) counter++;     // 원자적 증가
+    std::lock_guard<std::mutex> lock(coutMutex);   // 출력이 섞이지 않게
+    std::cout << "작업자 " << id << " 완료\n";
+}
+
+long long partialSum(const std::vector<int>& v, std::size_t from, std::size_t to) {
+    return std::accumulate(v.begin() + from, v.begin() + to, 0LL);
+}
+
+int main() {
+    std::atomic<int> counter{0};
+    {
+        std::vector<std::jthread> threads;
+        for (int i = 0; i < 4; ++i) threads.emplace_back(worker, i, std::ref(counter));
+    }   // jthread는 스코프를 벗어날 때 자동으로 join
+    std::cout << "counter = " << counter << '\n';    // 항상 40000
+
+    std::vector<int> data(1'000'000);
+    std::iota(data.begin(), data.end(), 1);
+    std::size_t half = data.size() / 2;
+    auto f1 = std::async(std::launch::async, partialSum, std::cref(data), 0, half);
+    auto f2 = std::async(std::launch::async, partialSum, std::cref(data), half, data.size());
+    std::cout << "합계 = " << f1.get() + f2.get() << '\n';   // 500000500000
+}
+--- exercise
+`std::mutex` 와 `std::lock_guard` 를 사용해 여러 스레드가 공유 `std::vector<int>` 에 안전하게 값을 추가하도록 만드세요. 스레드 4개가 각각 자신의 id를 1000번 추가한 뒤 벡터 크기가 4000인지 확인하세요.
+--- solution
+#include <iostream>
+#include <mutex>
+#include <thread>
+#include <vector>
+
+int main() {
+    std::vector<int> shared;
+    std::mutex m;
+    {
+        std::vector<std::jthread> ts;
+        for (int id = 0; id < 4; ++id) {
+            ts.emplace_back([&shared, &m, id] {
+                for (int i = 0; i < 1000; ++i) {
+                    std::lock_guard<std::mutex> lock(m);
+                    shared.push_back(id);
+                }
+            });
+        }
+    }
+    std::cout << shared.size() << '\n';   // 4000
+}
+--- quiz
+? `std::lock_guard` 의 역할은?
++ 생성 시 뮤텍스를 잠그고 스코프를 벗어나면 자동으로 해제한다
+- 스레드를 생성한다
+- 데드락을 자동으로 해결한다
+- 원자적 변수를 만든다
+! RAII 덕분에 예외가 발생해도 잠금이 확실히 풀립니다.
+? `std::thread` 대비 `std::jthread` 의 장점은?
+- 더 빠르게 실행된다
++ 소멸될 때 자동으로 join하며 협력적 중단을 지원한다
+- 뮤텍스가 필요 없다
+- GPU에서 실행된다
+! std::thread는 join/detach 없이 소멸되면 std::terminate가 호출됩니다.

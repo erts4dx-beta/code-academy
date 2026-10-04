@@ -1,0 +1,927 @@
+@id htmlcss
+@name HTML/CSS
+@badge </>
+@color #e34f26
+@difficulty 1
+@category 웹
+@year 1993 / 1996
+@uses 웹 페이지 구조 · 디자인과 레이아웃 · 반응형 웹 · 이메일 템플릿
+@desc 웹의 뼈대(HTML)와 옷(CSS)입니다. 엄밀히는 프로그래밍 언어가 아닌 마크업/스타일 언어지만, 모든 웹 개발의 출발점입니다.
+@hl html
+
+=== 입문 | html-basics | HTML 문서의 기본 구조
+HTML(HyperText Markup Language)은 웹 페이지의 **구조와 의미**를 정의합니다. `<태그>` 로 내용을 감싸 "이것은 제목", "이것은 문단"이라고 브라우저에 알려 줍니다.
+
+## 기본 개념
+- **요소(element)**: 여는 태그 + 내용 + 닫는 태그. 예: `<p>문단</p>`
+- **빈 요소**: 닫는 태그가 없음. 예: `<img>`, `<br>`, `<input>`, `<meta>`
+- **속성(attribute)**: 태그에 추가 정보. 예: `<a href="https://...">`
+- 요소는 **중첩**할 수 있으며, 올바른 순서로 닫아야 합니다.
+
+## 문서 골격
+`<!DOCTYPE html>` 선언 → `<html lang="ko">` → `<head>`(메타 정보: 문자 인코딩, 제목, CSS 연결) + `<body>`(화면에 보이는 내용).
+
+> `<meta charset="utf-8">` 이 없으면 한글이 깨질 수 있습니다. `viewport` 메타 태그는 모바일 반응형의 필수 요소입니다.
+
+메모장이나 VS Code로 `index.html` 을 저장하고 더블클릭하면 브라우저에서 바로 볼 수 있습니다.
+--- code
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>나의 첫 웹 페이지</title>
+</head>
+<body>
+  <h1>안녕하세요!</h1>
+  <h2>자기소개</h2>
+  <p>저는 <strong>웹 개발</strong>을 배우고 있습니다.</p>
+  <p>줄을<br>바꿀 수 있어요.</p>
+  <!-- 주석: 화면에 표시되지 않습니다 -->
+  <hr>
+  <a href="https://developer.mozilla.org/ko/" target="_blank">MDN 문서 보기</a>
+  <img src="photo.jpg" alt="프로필 사진" width="200">
+</body>
+</html>
+--- exercise
+자신을 소개하는 HTML 문서를 만들어 보세요. `<h1>` 제목, 두 개의 `<p>` 문단(하나에는 `<em>` 강조 포함), 좋아하는 사이트로 가는 링크 하나를 넣고, 올바른 문서 골격(DOCTYPE, head, meta charset, title)을 갖추세요.
+--- solution
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>홍길동 소개</title>
+</head>
+<body>
+  <h1>홍길동입니다</h1>
+  <p>엔지니어로 일하고 있어요.</p>
+  <p>요즘은 <em>프론트엔드</em> 공부에 푹 빠져 있습니다.</p>
+  <a href="https://github.com">제 GitHub 구경하기</a>
+</body>
+</html>
+--- quiz
+? 이미지가 로드되지 않을 때 대신 표시되고 스크린 리더가 읽는 속성은?
+- `title`
++ `alt`
+- `src`
+- `name`
+! alt는 접근성의 핵심 속성이며, 장식용 이미지는 alt=""로 비워 둡니다.
+? 다음 중 닫는 태그가 없는 빈 요소는?
+- `<p>`
+- `<div>`
++ `<img>`
+- `<a>`
+! img, br, hr, input, meta, link 등은 내용이 없는 빈 요소입니다.
+
+=== 입문 | html-content | 텍스트, 목록, 표, 링크
+## 텍스트 요소
+- 제목: `<h1>` ~ `<h6>` (한 페이지에 `<h1>` 은 보통 하나, 단계를 건너뛰지 않기)
+- `<p>` 문단, `<strong>` 중요(굵게), `<em>` 강조(기울임), `<code>` 코드, `<blockquote>` 인용
+
+## 목록
+- `<ul>` 순서 없는 목록, `<ol>` 순서 있는 목록, 각 항목은 `<li>`
+- 목록은 중첩할 수 있습니다.
+
+## 표
+`<table>` 안에 `<thead>`, `<tbody>`, 행 `<tr>`, 제목 셀 `<th>`, 데이터 셀 `<td>`. `colspan`, `rowspan` 으로 셀을 병합합니다. 표는 **표 형식 데이터에만** 사용하고 레이아웃용으로 쓰지 마세요.
+
+## 링크
+`<a href>` 의 대상: 외부 URL, 상대 경로(`about.html`), 페이지 내 위치(`#section-id`), `mailto:`, `tel:`. 새 탭은 `target="_blank"`.
+--- code
+<h2 id="menu">오늘의 메뉴</h2>
+<ul>
+  <li>커피
+    <ul>
+      <li>아메리카노</li>
+      <li>라떼</li>
+    </ul>
+  </li>
+  <li>디저트</li>
+</ul>
+
+<ol>
+  <li>원두를 간다</li>
+  <li>물을 끓인다</li>
+  <li>추출한다</li>
+</ol>
+
+<table>
+  <caption>가격표</caption>
+  <thead>
+    <tr><th>메뉴</th><th>가격</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>아메리카노</td><td>4,000원</td></tr>
+    <tr><td>라떼</td><td>4,500원</td></tr>
+    <tr><td colspan="2">모든 음료 샷 추가 +500원</td></tr>
+  </tbody>
+</table>
+
+<p><a href="#menu">메뉴로 이동</a> · <a href="mailto:hello@example.com">문의하기</a></p>
+--- exercise
+주간 시간표를 표로 만들어 보세요. 첫 행은 요일(월~금) 제목 셀, 첫 열은 교시(1~3교시)로 구성하고, 점심시간 행은 `colspan` 으로 한 칸에 "점심시간"이라고 표시하세요.
+--- solution
+<table>
+  <thead>
+    <tr><th></th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>1교시</th><td>국어</td><td>수학</td><td>영어</td><td>과학</td><td>체육</td></tr>
+    <tr><th>2교시</th><td>수학</td><td>영어</td><td>국어</td><td>음악</td><td>미술</td></tr>
+    <tr><td colspan="6">점심시간</td></tr>
+    <tr><th>3교시</th><td>사회</td><td>과학</td><td>체육</td><td>국어</td><td>코딩</td></tr>
+  </tbody>
+</table>
+--- quiz
+? 순서가 중요한 단계별 설명에 가장 알맞은 태그는?
+- `<ul>`
++ `<ol>`
+- `<dl>`
+- `<table>`
+! ol(ordered list)은 번호가 매겨지는 순서 있는 목록입니다.
+? 같은 페이지의 `id="faq"` 요소로 이동하는 링크는?
+- `<a href="faq">`
++ `<a href="#faq">`
+- `<a href=".faq">`
+- `<a id="faq">`
+! #id 형태의 프래그먼트로 페이지 내 위치를 지정합니다.
+
+=== 입문 | css-basics | CSS 기초: 선택자와 속성
+CSS(Cascading Style Sheets)는 HTML 요소의 **모양**을 정합니다. `선택자 { 속성: 값; }` 형태의 규칙으로 작성합니다.
+
+## 적용 방법
+1. 외부 파일(권장): `<link rel="stylesheet" href="style.css">`
+2. `<style>` 태그: head 안에 작성
+3. 인라인: `<p style="color: red">` (유지보수가 어려워 지양)
+
+## 주요 선택자
+- 태그: `p`, 클래스: `.card`, 아이디: `#header`
+- 자손: `nav a`, 자식: `ul > li`, 여러 개: `h1, h2`
+- 속성: `input[type="email"]`
+- 가상 클래스: `a:hover`, `li:first-child`, `:nth-child(2n)`, `:focus`
+- 가상 요소: `::before`, `::after`, `::placeholder`
+
+## 우선순위(명시도)와 캐스케이드
+여러 규칙이 충돌하면 **인라인 > 아이디 > 클래스/속성/가상 클래스 > 태그** 순으로 이기고, 명시도가 같으면 **나중에 작성된 규칙**이 적용됩니다. `!important` 는 최후의 수단입니다.
+--- code css
+/* style.css */
+body {
+  font-family: "Noto Sans KR", sans-serif;
+  color: #222;
+  background-color: #fafafa;
+  line-height: 1.6;
+}
+
+h1 {
+  color: #4f46e5;
+  font-size: 2rem;
+}
+
+.card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+#main-title { text-transform: uppercase; }
+
+nav a { text-decoration: none; color: #555; }
+nav a:hover { color: #4f46e5; text-decoration: underline; }
+
+li:nth-child(odd) { background: #f3f4f6; }
+
+input[type="email"]:focus {
+  outline: 2px solid #4f46e5;
+}
+
+.note::before {
+  content: "📌 ";
+}
+--- exercise
+`.button` 클래스에 배경색 `#4f46e5`, 흰 글자, 모서리 둥글기 8px, 안쪽 여백 10px 20px을 주고, 마우스를 올리면 배경색이 `#4338ca` 로 바뀌게 하세요. 또한 `.button.danger` 는 빨간 배경이 되도록 하세요.
+--- solution css
+.button {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+.button:hover {
+  background: #4338ca;
+}
+.button.danger {
+  background: #dc2626;
+}
+--- quiz
+? `<p id="intro" class="text">` 에 `#intro { color: red }` 와 `.text { color: blue }` 가 모두 적용되면 글자색은?
++ 빨강
+- 파랑
+- 나중에 작성된 규칙의 색
+- 검정
+! 아이디 선택자의 명시도가 클래스 선택자보다 높아 작성 순서와 관계없이 이깁니다.
+? `ul > li` 선택자의 의미는?
+- ul 안의 모든 li
++ ul의 직계 자식인 li
+- ul 바로 다음 형제 li
+- ul과 li 모두
+! >는 자식 결합자로, 손자 이하의 li는 선택하지 않습니다.
+
+=== 초급 | box-model | 박스 모델과 단위
+모든 HTML 요소는 사각형 **박스**입니다. 안쪽부터 `content`(내용) → `padding`(안쪽 여백) → `border`(테두리) → `margin`(바깥 여백) 순서로 감쌉니다.
+
+## box-sizing
+기본값 `content-box` 에서는 `width` 가 내용 영역만의 너비라서, padding과 border를 더하면 실제 크기가 커집니다. `box-sizing: border-box` 로 설정하면 width에 padding과 border가 포함되어 계산이 직관적입니다. 대부분의 프로젝트는 전역으로 적용합니다.
+
+## display
+- `block`: 한 줄 전체 차지, width/height 지정 가능 (`div`, `p`, `h1`)
+- `inline`: 내용만큼만 차지, width/height 무시 (`span`, `a`, `strong`)
+- `inline-block`: 인라인처럼 배치되지만 크기 지정 가능
+- `none`: 화면에서 제거
+
+## 단위
+- `px`: 고정 크기
+- `rem`: 루트(html) 글자 크기 기준 — 글꼴 크기에 권장
+- `em`: 부모(자신) 글자 크기 기준
+- `%`: 부모 기준 비율, `vw`/`vh`: 화면 너비/높이의 1%
+
+> 세로 방향으로 붙은 두 블록의 margin은 더해지지 않고 큰 쪽 하나만 적용됩니다(**마진 상쇄**).
+--- code css
+*, *::before, *::after {
+  box-sizing: border-box;   /* 전역 권장 설정 */
+}
+
+html { font-size: 16px; }   /* 1rem = 16px */
+
+.box {
+  width: 300px;              /* border-box라 전체 너비가 정확히 300px */
+  padding: 20px;             /* 상하좌우 */
+  border: 4px solid #4f46e5;
+  margin: 16px auto;         /* 상하 16px, 좌우 auto = 가운데 정렬 */
+}
+
+.spacing {
+  padding: 10px 20px;        /* 상하 10, 좌우 20 */
+  margin: 0 0 1.5rem;        /* 상 0, 좌우 0, 하 1.5rem */
+}
+
+.title { font-size: 1.5rem; }        /* 24px */
+.title small { font-size: 0.75em; }  /* 부모(24px)의 0.75 = 18px */
+
+.hero { height: 60vh; }
+
+.badge {
+  display: inline-block;     /* 인라인 배치 + 크기 지정 */
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+}
+--- exercise
+`content-box` 상태에서 `width: 200px; padding: 10px; border: 5px solid;` 인 요소의 실제 화면 너비는 얼마일까요? 그리고 같은 요소를 `border-box` 로 바꾸면 내용 영역 너비는 얼마가 되는지 계산하고, CSS로 확인할 수 있는 코드를 작성하세요.
+--- solution css
+/* content-box: 200 + 10*2 + 5*2 = 230px
+   border-box : 전체 200px, 내용 영역 = 200 - 20 - 10 = 170px */
+.a, .b {
+  width: 200px;
+  padding: 10px;
+  border: 5px solid tomato;
+  margin-bottom: 8px;
+}
+.a { box-sizing: content-box; }  /* 개발자 도구로 보면 230px */
+.b { box-sizing: border-box; }   /* 200px */
+--- quiz
+? `box-sizing: border-box` 일 때 `width` 에 포함되는 것은?
+- content만
+- content + margin
++ content + padding + border
+- content + padding + border + margin
+! margin은 어떤 경우에도 width에 포함되지 않습니다.
+? `html { font-size: 20px }` 일 때 `2rem` 은 몇 px인가요?
+- 32px
++ 40px
+- 20px
+- 부모 요소에 따라 다르다
+! rem은 항상 루트 요소의 글자 크기를 기준으로 합니다.
+
+=== 초급 | flexbox | Flexbox 레이아웃
+**Flexbox** 는 요소를 **한 방향(가로 또는 세로)** 으로 배치하는 레이아웃 방식입니다. 부모에 `display: flex` 를 주면 자식들이 flex 아이템이 됩니다.
+
+## 컨테이너(부모) 속성
+- `flex-direction`: `row`(기본, 가로) / `column`(세로)
+- `justify-content`: **주축** 정렬 — `flex-start`, `center`, `space-between`, `space-around`, `space-evenly`
+- `align-items`: **교차축** 정렬 — `stretch`(기본), `center`, `flex-start`, `flex-end`
+- `flex-wrap: wrap`: 공간이 부족하면 줄바꿈
+- `gap`: 아이템 사이 간격
+
+## 아이템(자식) 속성
+- `flex: 1`: 남는 공간을 비율대로 차지 (`flex-grow`, `flex-shrink`, `flex-basis` 단축)
+- `align-self`: 개별 교차축 정렬
+- `order`: 표시 순서 변경
+
+> 요소를 화면 정중앙에 두는 가장 쉬운 방법: 부모에 `display: flex; justify-content: center; align-items: center;`
+--- code
+<style>
+  .navbar {
+    display: flex;
+    justify-content: space-between;  /* 로고는 왼쪽, 메뉴는 오른쪽 */
+    align-items: center;
+    padding: 12px 24px;
+    background: #111827;
+    color: white;
+  }
+  .menu { display: flex; gap: 16px; list-style: none; margin: 0; padding: 0; }
+
+  .center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    border: 2px dashed #ccc;
+  }
+
+  .layout { display: flex; gap: 16px; }
+  .sidebar { flex: 0 0 200px; }      /* 고정 200px */
+  .content { flex: 1; }              /* 나머지 전부 */
+
+  .cards { display: flex; flex-wrap: wrap; gap: 12px; }
+  .cards > div { flex: 1 1 200px; padding: 16px; background: #eef2ff; }
+</style>
+
+<nav class="navbar">
+  <strong>LOGO</strong>
+  <ul class="menu"><li>홈</li><li>소개</li><li>문의</li></ul>
+</nav>
+<div class="center">정중앙!</div>
+<div class="layout">
+  <aside class="sidebar">사이드바</aside>
+  <main class="content">본문</main>
+</div>
+<div class="cards"><div>카드1</div><div>카드2</div><div>카드3</div></div>
+--- exercise
+푸터를 만들어 보세요. 왼쪽에는 저작권 문구, 가운데에는 링크 3개, 오른쪽에는 SNS 아이콘 텍스트가 오도록 Flexbox로 배치하고, 화면이 좁으면 세로로 쌓이도록 `flex-wrap` 과 `gap` 을 활용하세요.
+--- solution
+<style>
+  .footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    background: #f3f4f6;
+  }
+  .footer nav { display: flex; gap: 16px; }
+</style>
+<footer class="footer">
+  <span>© 2026 코드 아카데미</span>
+  <nav><a href="#">이용약관</a><a href="#">개인정보</a><a href="#">문의</a></nav>
+  <span>🐦 📘 📷</span>
+</footer>
+--- quiz
+? `flex-direction: row` 일 때 `justify-content` 가 정렬하는 방향은?
++ 가로(주축)
+- 세로(교차축)
+- 양방향 모두
+- 대각선
+! justify-content는 주축, align-items는 교차축을 정렬합니다. column이면 반대가 됩니다.
+? 아이템이 남는 공간을 모두 차지하게 하는 속성은?
+- `flex-wrap: wrap`
+- `align-self: stretch`
++ `flex: 1`
+- `order: 1`
+! flex: 1은 flex-grow: 1로, 남는 공간을 비율대로 나눠 갖습니다.
+
+=== 초급 | forms | 폼과 시맨틱 HTML
+## 폼(form)
+사용자 입력을 받는 요소입니다.
+- `<input type="...">`: `text`, `email`, `password`, `number`, `date`, `checkbox`, `radio`, `file` 등
+- `<label for="id">`: 입력 요소와 연결 — 클릭 영역이 넓어지고 스크린 리더가 읽어 줌
+- `<select>`, `<textarea>`, `<button type="submit">`
+- 기본 검증 속성: `required`, `minlength`, `maxlength`, `min`, `max`, `pattern`
+
+## 시맨틱 태그
+의미를 담은 태그를 쓰면 **접근성, SEO, 가독성**이 좋아집니다.
+- `<header>`, `<nav>`, `<main>`, `<article>`, `<section>`, `<aside>`, `<footer>`
+- `<figure>` + `<figcaption>`, `<time datetime="2026-10-05">`
+
+> 의미 없는 `<div>` 로만 구성된 "div 수프"를 피하세요. 클릭 가능한 요소는 `<div onclick>` 대신 `<button>` 을 써야 키보드 사용자도 조작할 수 있습니다.
+--- code
+<main>
+  <article>
+    <header>
+      <h1>회원 가입</h1>
+      <p><time datetime="2026-10-05">2026년 10월 5일</time> 업데이트</p>
+    </header>
+
+    <form action="/signup" method="post">
+      <label for="name">이름</label>
+      <input id="name" name="name" required minlength="2">
+
+      <label for="email">이메일</label>
+      <input id="email" name="email" type="email" required placeholder="you@example.com">
+
+      <label for="pw">비밀번호 (8자 이상)</label>
+      <input id="pw" name="pw" type="password" minlength="8" required>
+
+      <fieldset>
+        <legend>관심 분야</legend>
+        <label><input type="checkbox" name="topic" value="web"> 웹</label>
+        <label><input type="checkbox" name="topic" value="ai"> AI</label>
+      </fieldset>
+
+      <label for="level">실력</label>
+      <select id="level" name="level">
+        <option value="beginner">입문</option>
+        <option value="mid">중급</option>
+      </select>
+
+      <label><input type="radio" name="plan" value="free" checked> 무료</label>
+      <label><input type="radio" name="plan" value="pro"> 프로</label>
+
+      <button type="submit">가입하기</button>
+    </form>
+  </article>
+</main>
+--- exercise
+문의하기 폼을 만들어 보세요: 이름(필수), 이메일(필수, email 타입), 문의 유형(select: 일반/버그/제안), 내용(textarea, 최소 10자), 개인정보 동의 체크박스(필수), 전송 버튼. 모든 입력에 label을 연결하세요.
+--- solution
+<form>
+  <label for="cname">이름</label>
+  <input id="cname" name="name" required>
+
+  <label for="cemail">이메일</label>
+  <input id="cemail" name="email" type="email" required>
+
+  <label for="ctype">문의 유형</label>
+  <select id="ctype" name="type">
+    <option>일반</option>
+    <option>버그</option>
+    <option>제안</option>
+  </select>
+
+  <label for="cmsg">내용</label>
+  <textarea id="cmsg" name="message" minlength="10" rows="5" required></textarea>
+
+  <label><input type="checkbox" name="agree" required> 개인정보 수집에 동의합니다</label>
+  <button type="submit">보내기</button>
+</form>
+--- quiz
+? `<label for="email">` 의 `for` 값은 무엇과 일치해야 하나요?
+- input의 name
++ input의 id
+- input의 type
+- form의 action
+! label의 for 속성은 연결할 폼 요소의 id를 가리킵니다.
+? 같은 name을 가진 radio 버튼들의 특징은?
++ 그중 하나만 선택할 수 있다
+- 여러 개를 동시에 선택할 수 있다
+- 자동으로 모두 선택된다
+- name이 같으면 오류가 난다
+! 같은 name의 라디오 버튼은 하나의 그룹이 되어 단일 선택만 허용합니다.
+
+=== 중급 | grid | CSS Grid 레이아웃
+**Grid** 는 행과 열의 **2차원** 레이아웃 시스템입니다. Flexbox가 한 줄 정렬에 강하다면, Grid는 전체 페이지 구조나 카드 격자에 강합니다.
+
+## 주요 속성
+- `grid-template-columns: 200px 1fr 1fr` — 열 크기 정의. `fr` 은 남은 공간의 비율
+- `repeat(3, 1fr)` — 반복
+- `repeat(auto-fill, minmax(220px, 1fr))` — **미디어 쿼리 없이** 화면 크기에 따라 열 개수 자동 조절
+- `gap` — 셀 간격
+- `grid-column: 1 / 3` 또는 `span 2` — 여러 칸 차지
+- `grid-template-areas` — 영역 이름으로 레이아웃을 그림처럼 정의
+
+## Flexbox vs Grid
+- 한 방향 나열(메뉴, 버튼 그룹) → Flexbox
+- 행과 열이 모두 중요한 구조(페이지 골격, 갤러리) → Grid
+- 둘을 섞어 쓰는 것이 일반적입니다.
+--- code
+<style>
+  .page {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "header header"
+      "sidebar main"
+      "footer footer";
+    min-height: 100vh;
+    gap: 12px;
+  }
+  .page > header { grid-area: header; background: #c7d2fe; }
+  .page > aside  { grid-area: sidebar; background: #e0e7ff; }
+  .page > main   { grid-area: main; }
+  .page > footer { grid-area: footer; background: #c7d2fe; }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .gallery .featured {
+    grid-column: span 2;    /* 두 칸 차지 */
+    grid-row: span 2;
+  }
+  .gallery div { background: #eef2ff; padding: 24px; border-radius: 8px; }
+</style>
+
+<div class="page">
+  <header>헤더</header>
+  <aside>사이드바</aside>
+  <main>
+    <div class="gallery">
+      <div class="featured">추천</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div>
+    </div>
+  </main>
+  <footer>푸터</footer>
+</div>
+--- exercise
+`grid-template-areas` 를 이용해 블로그 레이아웃을 만드세요: 상단 헤더(전체 너비), 본문(넓게)과 오른쪽 사이드바(250px), 하단 푸터(전체 너비). 본문 안에는 `auto-fill` 과 `minmax` 를 이용한 글 카드 격자를 넣으세요.
+--- solution
+<style>
+  .blog {
+    display: grid;
+    grid-template-columns: 1fr 250px;
+    grid-template-areas:
+      "head head"
+      "main side"
+      "foot foot";
+    gap: 16px;
+  }
+  .blog header { grid-area: head; }
+  .blog main   { grid-area: main; }
+  .blog aside  { grid-area: side; }
+  .blog footer { grid-area: foot; }
+  .posts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+</style>
+<div class="blog">
+  <header>내 블로그</header>
+  <main><div class="posts"><article>글1</article><article>글2</article><article>글3</article></div></main>
+  <aside>태그 목록</aside>
+  <footer>© 2026</footer>
+</div>
+--- quiz
+? `grid-template-columns: 1fr 2fr` 의 의미는?
+- 1px과 2px 열
++ 남은 공간을 1:2 비율로 나눈 두 열
+- 두 번째 열이 첫 번째 열 아래에 위치
+- 1개 행과 2개 열
+! fr(fraction)은 사용 가능한 공간의 비율 단위입니다.
+? 미디어 쿼리 없이 반응형 카드 격자를 만드는 패턴은?
++ `repeat(auto-fill, minmax(200px, 1fr))`
+- `repeat(3, 200px)`
+- `grid-auto-flow: column`
+- `display: inline-grid`
+! 화면 너비에 맞춰 200px 이상인 열을 가능한 만큼 자동으로 채웁니다.
+
+=== 중급 | responsive | 반응형 디자인과 미디어 쿼리
+**반응형 웹**은 하나의 HTML로 휴대폰, 태블릿, 데스크톱 등 모든 화면에 맞게 레이아웃을 바꾸는 방식입니다.
+
+## 핵심 도구
+- `viewport` 메타 태그 (필수)
+- **미디어 쿼리**: `@media (min-width: 768px) { ... }` — 조건을 만족할 때만 규칙 적용
+- 유연한 단위: `%`, `fr`, `rem`, `vw`, `clamp()`
+- 유연한 이미지: `img { max-width: 100%; height: auto; }`
+
+## 모바일 우선(Mobile First)
+기본 스타일을 작은 화면 기준으로 작성하고, `min-width` 미디어 쿼리로 큰 화면 스타일을 **추가**하는 방식입니다. CSS가 단순해지고 모바일 성능에 유리합니다.
+
+## 유용한 기능
+- `clamp(최소, 선호, 최대)`: `font-size: clamp(1.5rem, 4vw, 3rem)` — 화면에 따라 부드럽게 변하는 글자 크기
+- `@media (prefers-color-scheme: dark)`: 시스템 다크 모드 감지
+- `@media (prefers-reduced-motion: reduce)`: 애니메이션 줄이기 설정 존중
+--- code css
+/* 모바일 우선: 기본은 1열 */
+.container {
+  padding: 16px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+img {
+  max-width: 100%;
+  height: auto;
+}
+h1 {
+  font-size: clamp(1.75rem, 5vw, 3rem);
+}
+.menu { display: none; }        /* 모바일에서는 햄버거 메뉴 사용 */
+
+/* 태블릿 이상 */
+@media (min-width: 768px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* 데스크톱 이상 */
+@media (min-width: 1024px) {
+  .container { max-width: 1100px; margin: 0 auto; }
+  .grid { grid-template-columns: repeat(3, 1fr); }
+  .menu { display: flex; }
+  .hamburger { display: none; }
+}
+
+/* 사용자 환경 설정 존중 */
+@media (prefers-color-scheme: dark) {
+  body { background: #111; color: #eee; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+--- exercise
+모바일 우선 방식으로, 기본은 상품 카드 1열, 600px 이상에서 2열, 900px 이상에서 4열이 되도록 CSS를 작성하세요. 제목 글자 크기는 `clamp()` 로 1.5rem~2.5rem 사이에서 변하게 하세요.
+--- solution css
+.products {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 600px) {
+  .products { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 900px) {
+  .products { grid-template-columns: repeat(4, 1fr); }
+}
+.products h2 {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+}
+--- quiz
+? 모바일 우선(mobile first) 방식에서 주로 사용하는 미디어 쿼리 조건은?
++ `min-width`
+- `max-width`
+- `orientation`
+- `resolution`
+! 작은 화면을 기본으로 하고 화면이 커질 때(min-width 이상) 스타일을 덧붙입니다.
+? `viewport` 메타 태그가 없으면 모바일에서 생기는 문제는?
+- 이미지가 표시되지 않는다
++ 페이지가 데스크톱 너비로 렌더링된 뒤 축소되어 글자가 매우 작게 보인다
+- CSS가 적용되지 않는다
+- 자바스크립트가 실행되지 않는다
+! 모바일 브라우저는 viewport 설정이 없으면 약 980px 너비의 가상 화면으로 렌더링합니다.
+
+=== 중급 | position | 포지셔닝, z-index, 변수
+## position 속성
+- `static`: 기본값, 문서 흐름대로
+- `relative`: 원래 자리를 기준으로 이동. 자식 `absolute` 의 기준점 역할
+- `absolute`: 문서 흐름에서 빠지고, 가장 가까운 **position이 지정된 조상** 기준으로 배치
+- `fixed`: 화면(뷰포트) 기준 고정 — 플로팅 버튼
+- `sticky`: 스크롤하다가 지정 위치에 닿으면 고정 — 상단 헤더, 표 머리글
+
+`top`, `right`, `bottom`, `left` 로 위치를, `z-index` 로 겹침 순서를 정합니다(position이 static이 아닐 때 동작).
+
+## CSS 변수 (사용자 정의 속성)
+`--main-color: #4f46e5;` 로 선언하고 `var(--main-color)` 로 사용합니다. 하위 요소로 **상속**되고 자바스크립트로 실시간 변경이 가능해 **테마(다크 모드)** 구현에 최적입니다. 이 사이트의 다크 모드도 CSS 변수로 만들어졌습니다.
+--- code
+<style>
+  :root {
+    --primary: #4f46e5;
+    --radius: 12px;
+    --bg: #ffffff;
+    --text: #111827;
+  }
+  [data-theme="dark"] {
+    --bg: #111827;
+    --text: #f9fafb;
+  }
+  body { background: var(--bg); color: var(--text); }
+
+  .header { position: sticky; top: 0; background: var(--primary); color: white; padding: 12px; z-index: 10; }
+
+  .card { position: relative; padding: 20px; border: 1px solid #ddd; border-radius: var(--radius); }
+  .card .badge {
+    position: absolute;      /* .card 기준 */
+    top: -10px;
+    right: 12px;
+    background: crimson;
+    color: white;
+    padding: 2px 8px;
+    border-radius: var(--radius);
+  }
+
+  .fab {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    font-size: 24px;
+  }
+</style>
+
+<div class="header">스크롤해도 붙어 있는 헤더</div>
+<div class="card"><span class="badge">NEW</span>카드 내용</div>
+<button class="fab" onclick="document.documentElement.dataset.theme =
+  document.documentElement.dataset.theme === 'dark' ? '' : 'dark'">🌙</button>
+--- exercise
+모달(팝업) 창을 만드세요: 화면 전체를 덮는 반투명 검정 배경(`position: fixed; inset: 0`) 위에, 정중앙에 흰색 상자가 뜨고 상자의 오른쪽 위 모서리에 닫기(×) 버튼이 `absolute` 로 배치되게 하세요.
+--- solution
+<style>
+  .overlay {
+    position: fixed;
+    inset: 0;                         /* top/right/bottom/left: 0 */
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+  .modal {
+    position: relative;
+    background: white;
+    padding: 32px;
+    border-radius: 12px;
+    width: min(90vw, 400px);
+  }
+  .close { position: absolute; top: 8px; right: 12px; border: none; background: none; font-size: 24px; }
+</style>
+<div class="overlay">
+  <div class="modal">
+    <button class="close" aria-label="닫기">×</button>
+    <h2>알림</h2>
+    <p>모달 창입니다.</p>
+  </div>
+</div>
+--- quiz
+? `position: absolute` 요소의 기준점은?
+- 항상 body
+- 바로 위 부모 요소
++ position이 static이 아닌 가장 가까운 조상 요소
+- 브라우저 화면
+! 그런 조상이 없으면 초기 컨테이닝 블록(문서)을 기준으로 합니다.
+? CSS 변수 `--gap: 8px` 을 사용하는 올바른 문법은?
+- `gap: $gap;`
+- `gap: --gap;`
++ `gap: var(--gap);`
+- `gap: @gap;`
+! var() 함수로 사용자 정의 속성 값을 읽습니다. 두 번째 인자로 기본값도 줄 수 있습니다.
+
+=== 고급 | animation | 트랜지션과 애니메이션
+## transition
+속성 값이 바뀔 때 **부드럽게 변화**시킵니다: `transition: 속성 시간 타이밍함수 지연;`
+예: `transition: transform 0.2s ease-out;`
+
+## transform
+요소를 이동(`translate`), 회전(`rotate`), 확대(`scale`), 기울임(`skew`)합니다. 레이아웃을 다시 계산하지 않아 성능이 좋습니다.
+
+## @keyframes 애니메이션
+여러 단계의 애니메이션을 정의하고 `animation` 속성으로 적용합니다: 이름, 시간, 반복 횟수(`infinite`), 방향(`alternate`) 등.
+
+## 성능 팁
+- `transform` 과 `opacity` 만 애니메이션하면 GPU 합성으로 부드럽습니다.
+- `width`, `top`, `margin` 등을 애니메이션하면 매 프레임 레이아웃 계산이 발생해 버벅일 수 있습니다.
+- 접근성: `prefers-reduced-motion` 설정을 존중하세요.
+--- code
+<style>
+  .btn {
+    padding: 12px 24px;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+  }
+  .btn:active { transform: scale(0.97); }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card { animation: fadeUp 0.5s ease-out both; }
+  .card:nth-child(2) { animation-delay: 0.1s; }
+  .card:nth-child(3) { animation-delay: 0.2s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spinner, .card { animation: none; }
+  }
+</style>
+<button class="btn">마우스를 올려 보세요</button>
+<div class="spinner" role="status" aria-label="로딩 중"></div>
+<div class="card">카드 1</div><div class="card">카드 2</div><div class="card">카드 3</div>
+--- exercise
+하트(❤️) 텍스트가 1초 주기로 커졌다 작아지는(`scale` 1 → 1.3 → 1) "두근두근" 애니메이션을 무한 반복하도록 `@keyframes heartbeat` 를 작성하세요.
+--- solution
+<style>
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+  }
+  .heart {
+    display: inline-block;   /* transform은 inline 요소에 적용되지 않음 */
+    font-size: 48px;
+    animation: heartbeat 1s ease-in-out infinite;
+  }
+</style>
+<span class="heart">❤️</span>
+--- quiz
+? 애니메이션 성능에 가장 유리한 속성 조합은?
+- `width` 와 `height`
+- `top` 과 `left`
++ `transform` 과 `opacity`
+- `margin` 과 `padding`
+! transform과 opacity는 레이아웃/페인트 없이 합성 단계에서 처리됩니다.
+? `animation: spin 1s linear infinite;` 에서 `infinite` 의 의미는?
+- 무한히 느려진다
++ 애니메이션을 무한 반복한다
+- 끝 상태를 유지한다
+- 지연 시간이 무한하다
+! animation-iteration-count 값입니다.
+
+=== 고급 | accessibility | 접근성과 웹 표준 실전
+**웹 접근성(a11y)** 은 장애가 있는 사용자를 포함해 누구나 웹을 이용할 수 있게 하는 것입니다. 한국에서도 공공기관 등은 웹 접근성 준수가 법적 의무이며, 접근성이 좋은 사이트는 SEO와 사용성도 좋습니다.
+
+## 핵심 체크리스트
+- 모든 의미 있는 이미지에 `alt`, 장식 이미지는 `alt=""`
+- 시맨틱 태그와 올바른 제목 계층(h1 → h2 → h3)
+- 모든 폼 요소에 `<label>`
+- **키보드만으로** 모든 기능 사용 가능 (Tab 이동, Enter/Space 실행), `:focus-visible` 스타일 제공
+- 글자와 배경의 **명도 대비** 4.5:1 이상 (큰 글자 3:1)
+- 색상만으로 정보를 전달하지 않기 (오류를 빨간색 + 아이콘/문구로)
+- `<html lang="ko">` 로 언어 지정
+
+## ARIA
+네이티브 HTML로 표현할 수 없을 때만 `role`, `aria-label`, `aria-expanded`, `aria-live` 등을 사용합니다. **"ARIA를 쓰지 않는 것이 최선의 ARIA"** 라는 말처럼, `<button>` 같은 네이티브 요소를 먼저 고려하세요.
+--- code
+<a class="skip-link" href="#main">본문 바로가기</a>
+
+<header>
+  <nav aria-label="주 메뉴">
+    <button aria-expanded="false" aria-controls="menu" id="menuBtn">메뉴</button>
+    <ul id="menu" hidden>
+      <li><a href="/" aria-current="page">홈</a></li>
+      <li><a href="/courses">강의</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+  <h1>강의 목록</h1>
+  <img src="chart.png" alt="2026년 월별 수강생 수: 1월 120명에서 9월 480명으로 증가">
+  <img src="divider.png" alt="">
+
+  <form>
+    <label for="q">강의 검색</label>
+    <input id="q" type="search" aria-describedby="q-help">
+    <p id="q-help">언어 이름이나 주제로 검색하세요.</p>
+    <p role="alert" class="error">⚠️ 검색어를 입력해 주세요.</p>
+  </form>
+  <div aria-live="polite" id="status"></div>
+</main>
+
+<style>
+  .skip-link { position: absolute; left: -9999px; }
+  .skip-link:focus { left: 8px; top: 8px; background: #fff; padding: 8px; }
+  :focus-visible { outline: 3px solid #4f46e5; outline-offset: 2px; }
+</style>
+<script>
+  const btn = document.getElementById("menuBtn");
+  btn.addEventListener("click", () => {
+    const open = btn.getAttribute("aria-expanded") === "true";
+    btn.setAttribute("aria-expanded", String(!open));
+    document.getElementById("menu").hidden = open;
+  });
+</script>
+--- exercise
+다음 코드의 접근성 문제를 찾아 고쳐 보세요: `<div onclick="save()" style="color:#aaa;background:#fff">저장</div>` 과 `<img src="logo.png">`, `<input placeholder="이메일">`.
+--- solution
+<!-- 1) div 대신 키보드 접근 가능한 button, 충분한 명도 대비 -->
+<button type="button" onclick="save()" style="color:#1f2937;background:#fff">저장</button>
+
+<!-- 2) 이미지 대체 텍스트 -->
+<img src="logo.png" alt="코드 아카데미 로고">
+
+<!-- 3) placeholder는 label을 대신할 수 없음 -->
+<label for="email">이메일</label>
+<input id="email" type="email" placeholder="you@example.com">
+--- quiz
+? 클릭 가능한 요소로 `<div onclick>` 보다 `<button>` 이 나은 이유는?
+- 디자인이 더 예뻐서
++ 기본적으로 키보드 포커스와 Enter/Space 동작, 역할 정보가 제공되어서
+- 더 빨리 렌더링되어서
+- div에는 onclick을 쓸 수 없어서
+! 네이티브 button은 접근성 기능이 내장되어 있습니다.
+? 화면에 내용이 동적으로 바뀔 때 스크린 리더에게 알려 주는 속성은?
+- `aria-hidden`
++ `aria-live`
+- `tabindex`
+- `role="presentation"`
+! aria-live 영역의 변경 내용은 스크린 리더가 읽어 줍니다.

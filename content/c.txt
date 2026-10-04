@@ -1,0 +1,973 @@
+@id c
+@name C
+@badge C
+@color #555f9e
+@difficulty 4
+@category 시스템
+@year 1972
+@uses 운영체제 · 임베디드/펌웨어 · 드라이버 · 고성능 라이브러리
+@desc 운영체제(Unix, Linux)를 만든 언어로, 메모리를 직접 다루는 저수준 제어가 가능합니다. 컴퓨터의 동작 원리를 깊이 이해하는 데 가장 좋은 언어입니다.
+
+=== 입문 | hello | C 언어 시작하기
+C는 1972년 데니스 리치가 Unix 운영체제를 만들기 위해 개발한 언어입니다. 50년이 넘었지만 지금도 리눅스 커널, 임베디드 기기, 데이터베이스, 파이썬 인터프리터(CPython) 등의 핵심이 C로 작성되어 있습니다.
+
+## 컴파일과 실행
+C는 **컴파일 언어**입니다. 소스 코드를 기계어 실행 파일로 변환한 뒤 실행합니다.
+- 리눅스/macOS: `gcc hello.c -o hello && ./hello`
+- Windows: MinGW(gcc) 또는 Visual Studio(MSVC) 사용
+- 경고를 켜는 습관: `gcc -Wall -Wextra -std=c17 hello.c -o hello`
+
+## 구조
+- `#include <stdio.h>`: 표준 입출력 함수(`printf` 등)의 선언을 가져오는 **전처리기** 지시문
+- `int main(void)`: 프로그램 시작점. `return 0;` 은 정상 종료를 의미
+- 모든 문장은 세미콜론으로 끝납니다.
+--- code
+#include <stdio.h>
+
+int main(void) {
+    printf("Hello, World!\n");
+    printf("안녕하세요, C 언어!\n");
+    printf("%d + %d = %d\n", 3, 4, 3 + 4);
+    printf("원주율은 약 %.2f\n", 3.14159);
+    printf("문자: %c, 문자열: %s\n", 'A', "C17");
+    return 0;
+}
+--- exercise
+`printf` 와 서식 지정자를 사용해 다음을 출력하세요: 자신의 이름(%s), 나이(%d), 키(%.1f), 혈액형 문자(%c). 그리고 `%5d|` 와 `%-5d|` 로 숫자 42를 출력해 정렬 차이를 확인하세요.
+--- solution
+#include <stdio.h>
+
+int main(void) {
+    printf("이름: %s\n", "홍길동");
+    printf("나이: %d\n", 30);
+    printf("키: %.1f\n", 175.5);
+    printf("혈액형: %c\n", 'O');
+    printf("[%5d|]\n", 42);    // [   42|]  오른쪽 정렬
+    printf("[%-5d|]\n", 42);   // [42   |]  왼쪽 정렬
+    return 0;
+}
+--- quiz
+? `#include <stdio.h>` 를 처리하는 단계는?
++ 전처리기(preprocessor)
+- 링커
+- 런타임
+- 운영체제
+! 전처리기가 컴파일 전에 헤더 파일 내용을 그 자리에 삽입합니다.
+? `printf` 에서 실수를 소수점 둘째 자리까지 출력하는 서식은?
+- `%d`
+- `%2f`
++ `%.2f`
+- `%f2`
+! %.2f는 소수점 이하 2자리로 반올림하여 출력합니다.
+
+=== 입문 | types | 변수, 자료형, 연산자
+C는 정적 타입 언어이며, 자료형의 **크기(바이트)** 가 중요합니다.
+
+## 기본 자료형 (일반적인 64비트 환경)
+- `char`: 1바이트, 문자 또는 작은 정수
+- `int`: 보통 4바이트 (약 ±21억)
+- `long long`: 8바이트
+- `float`: 4바이트 실수, `double`: 8바이트 실수 (기본적으로 double 사용)
+- `unsigned`: 음수 없이 양수 범위를 두 배로
+- `<stdbool.h>` 의 `bool`, `<stdint.h>` 의 `int32_t`, `uint8_t` 등 **크기가 고정된 타입** (임베디드에서 필수)
+
+`sizeof(타입)` 으로 크기를 확인할 수 있습니다.
+
+## 주의할 점
+- 초기화하지 않은 지역 변수에는 **쓰레기 값**이 들어 있습니다. 항상 초기화하세요.
+- 정수 나눗셈은 소수점을 버립니다: `7 / 2` → `3`
+- 부호 있는 정수의 오버플로는 **정의되지 않은 동작(UB)** 입니다.
+
+## 입력
+`scanf("%d", &n);` — 변수의 **주소(&)** 를 넘겨야 합니다.
+--- code
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+int main(void) {
+    int age = 30;
+    double height = 175.5;
+    char grade = 'A';
+    bool ok = true;
+    uint8_t small = 255;
+
+    printf("int: %zu바이트, double: %zu바이트, char: %zu바이트\n",
+           sizeof(int), sizeof(double), sizeof(char));
+
+    printf("%d %.1f %c %d\n", age, height, grade, ok);
+    small = small + 1;               // unsigned는 0으로 돌아감 (정의된 동작)
+    printf("uint8_t 255 + 1 = %d\n", small);
+
+    printf("%d %d %.2f\n", 7 / 2, 7 % 2, 7 / 2.0);   // 3 1 3.50
+    printf("문자 'A'의 코드: %d, 'A'+1 = %c\n", grade, grade + 1);
+
+    int n;
+    printf("정수를 입력하세요: ");
+    if (scanf("%d", &n) == 1) {
+        printf("두 배: %d\n", n * 2);
+    }
+    return 0;
+}
+--- exercise
+초(seconds)를 나타내는 정수 `int total = 3725;` 를 시, 분, 초로 변환해 `1시간 2분 5초` 형식으로 출력하세요. `/` 와 `%` 연산자를 활용하세요.
+--- solution
+#include <stdio.h>
+
+int main(void) {
+    int total = 3725;
+    int h = total / 3600;
+    int m = (total % 3600) / 60;
+    int s = total % 60;
+    printf("%d시간 %d분 %d초\n", h, m, s);   // 1시간 2분 5초
+    return 0;
+}
+--- quiz
+? C에서 초기화하지 않은 지역 변수 `int x;` 의 값은?
+- 항상 0
++ 예측할 수 없는 쓰레기 값
+- -1
+- 컴파일 오류
+! 지역 변수는 자동 초기화되지 않습니다. 전역/static 변수는 0으로 초기화됩니다.
+? `scanf("%d", &n)` 에서 `&` 를 붙이는 이유는?
+- 문법상 장식일 뿐이다
++ scanf가 값을 저장할 수 있도록 변수의 주소를 전달하기 위해
+- n을 상수로 만들기 위해
+- 정수 입력임을 표시하기 위해
+! C는 값에 의한 전달이므로 함수가 변수를 수정하려면 주소가 필요합니다.
+
+=== 입문 | control | 조건문과 반복문
+## 조건문
+- `if / else if / else`
+- `switch (정수식) { case 1: ... break; default: ... }` — `break` 를 빼면 다음 case로 **떨어집니다(fall-through)**
+- 삼항 연산자 `a > b ? a : b`
+
+C에서 **0은 거짓, 0이 아닌 값은 참**입니다.
+
+## 반복문
+- `for (초기식; 조건식; 증감식)`
+- `while (조건)`, `do { } while (조건);`
+- `break`, `continue`
+
+> `if (x = 5)` 는 비교가 아니라 **대입**이므로 항상 참이 됩니다. `-Wall` 옵션을 켜면 컴파일러가 경고해 줍니다.
+--- code
+#include <stdio.h>
+
+int main(void) {
+    int score = 82;
+    if (score >= 90) printf("A\n");
+    else if (score >= 80) printf("B\n");
+    else printf("C\n");
+
+    int month = 2;
+    switch (month) {
+        case 12: case 1: case 2:
+            printf("겨울\n");
+            break;
+        case 3: case 4: case 5:
+            printf("봄\n");
+            break;
+        default:
+            printf("기타 계절\n");
+    }
+
+    for (int i = 1; i <= 5; i++) {
+        for (int j = 0; j < i; j++) putchar('*');
+        putchar('\n');
+    }
+
+    int n = 12345, digits = 0, sum = 0;
+    while (n > 0) {
+        sum += n % 10;
+        n /= 10;
+        digits++;
+    }
+    printf("자릿수: %d, 각 자리 합: %d\n", digits, sum);   // 5, 15
+    return 0;
+}
+--- exercise
+1부터 n(=20)까지 반복하며 짝수의 합과 홀수의 합을 각각 구해 출력하세요. 그리고 피보나치 수열의 처음 15개 항을 출력하세요.
+--- solution
+#include <stdio.h>
+
+int main(void) {
+    int n = 20, even = 0, odd = 0;
+    for (int i = 1; i <= n; i++) {
+        if (i % 2 == 0) even += i;
+        else odd += i;
+    }
+    printf("짝수 합: %d, 홀수 합: %d\n", even, odd);   // 110, 100
+
+    long long a = 0, b = 1;
+    for (int i = 0; i < 15; i++) {
+        printf("%lld ", a);
+        long long t = a + b;
+        a = b;
+        b = t;
+    }
+    printf("\n");
+    return 0;
+}
+--- quiz
+? switch 문에서 case 끝에 `break` 가 없으면?
+- 컴파일 오류가 난다
++ 다음 case의 코드까지 이어서 실행된다
+- switch 문이 즉시 종료된다
+- default로 이동한다
+! fall-through라고 하며, 의도적으로 여러 case를 묶을 때 활용합니다.
+? C에서 `if (-1)` 의 조건은?
++ 참
+- 거짓
+- 컴파일 오류
+- 정의되지 않음
+! 0이 아닌 모든 값은 참으로 취급됩니다.
+
+=== 초급 | functions | 함수와 변수의 범위
+## 함수
+`반환타입 이름(매개변수) { ... }` 형태로 정의합니다. 함수를 호출하기 전에 **선언(프로토타입)** 이 있어야 하므로, main 아래에 정의할 경우 위에 선언을 둡니다. 큰 프로젝트에서는 선언을 헤더 파일(`.h`)에 모읍니다.
+
+## 값에 의한 전달
+C의 함수 인자는 **복사본**이 전달됩니다. 함수 안에서 매개변수를 바꿔도 호출한 쪽 변수는 바뀌지 않습니다(바꾸려면 포인터가 필요 — 다음 레슨).
+
+## 변수의 범위와 수명
+- 지역 변수: 블록 안에서만 유효, 블록이 끝나면 사라짐
+- 전역 변수: 파일 전체에서 유효 (남용 금지)
+- `static` 지역 변수: 범위는 지역이지만 **값이 함수 호출 사이에 유지**됨
+
+## 재귀
+함수가 자기 자신을 호출합니다. 반드시 **종료 조건**이 있어야 합니다.
+--- code
+#include <stdio.h>
+
+int add(int a, int b);            // 함수 선언(프로토타입)
+long long factorial(int n);
+void try_change(int x);
+int next_id(void);
+
+int main(void) {
+    printf("%d\n", add(3, 4));
+    printf("10! = %lld\n", factorial(10));
+
+    int value = 10;
+    try_change(value);
+    printf("main의 value: %d\n", value);   // 10 (안 바뀜)
+
+    for (int i = 0; i < 3; i++) printf("id=%d ", next_id());   // 1 2 3
+    printf("\n");
+    return 0;
+}
+
+int add(int a, int b) {
+    return a + b;
+}
+
+long long factorial(int n) {
+    if (n <= 1) return 1;          // 종료 조건
+    return n * factorial(n - 1);
+}
+
+void try_change(int x) {
+    x = 999;                       // 복사본만 바뀜
+    printf("함수 안의 x: %d\n", x);
+}
+
+int next_id(void) {
+    static int id = 0;             // 처음 한 번만 초기화되고 값 유지
+    return ++id;
+}
+--- exercise
+두 정수의 최대공약수를 구하는 재귀 함수 `int gcd(int a, int b)` (유클리드 호제법: `gcd(a, b) = gcd(b, a % b)`, `b == 0` 이면 `a`)와 이를 이용한 최소공배수 함수 `int lcm(int a, int b)` 를 작성하세요.
+--- solution
+#include <stdio.h>
+
+int gcd(int a, int b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+int lcm(int a, int b) {
+    return a / gcd(a, b) * b;   // 오버플로를 줄이기 위해 먼저 나눔
+}
+
+int main(void) {
+    printf("gcd(48, 18) = %d\n", gcd(48, 18));   // 6
+    printf("lcm(4, 6) = %d\n", lcm(4, 6));       // 12
+    return 0;
+}
+--- quiz
+? 함수 안에서 `static int count = 0;` 으로 선언한 변수의 특징은?
+- 함수가 호출될 때마다 0으로 초기화된다
++ 처음 한 번만 초기화되고 호출 사이에 값이 유지된다
+- 다른 파일에서도 접근할 수 있다
+- 값을 바꿀 수 없다
+! static 지역 변수는 프로그램 전체 수명 동안 존재합니다.
+? 재귀 함수에서 반드시 필요한 것은?
+- 전역 변수
++ 재귀를 멈추는 종료 조건
+- 반복문
+- 포인터
+! 종료 조건이 없으면 스택 오버플로가 발생합니다.
+
+=== 초급 | arrays-strings | 배열과 문자열
+## 배열
+같은 타입의 값을 **연속된 메모리**에 저장합니다: `int a[5] = {1, 2, 3};` (나머지는 0). 인덱스는 0부터이며, **C는 범위 검사를 하지 않습니다**. `a[10]` 처럼 범위를 벗어나면 정의되지 않은 동작으로 프로그램이 망가지거나 보안 취약점이 됩니다.
+
+배열 길이: `sizeof(a) / sizeof(a[0])` (단, 함수에 전달된 배열에서는 동작하지 않으므로 길이를 별도 인자로 넘깁니다).
+
+## 문자열
+C에는 문자열 타입이 없고, **널 문자 `'\0'` 로 끝나는 `char` 배열**을 문자열로 씁니다. `"hi"` 는 `{'h', 'i', '\0'}` 3바이트입니다.
+- `<string.h>`: `strlen`, `strcpy`, `strcat`, `strcmp`, `strncpy`
+- 문자열 비교는 `==` 가 아니라 `strcmp(a, b) == 0`
+- 버퍼 크기를 넘지 않도록 `snprintf`, `strncpy` 같은 크기 제한 함수를 사용하세요.
+
+> 한글은 UTF-8에서 글자당 3바이트이므로 `strlen("한글")` 은 6입니다.
+--- code
+#include <stdio.h>
+#include <string.h>
+
+double average(const int arr[], int n) {
+    int sum = 0;
+    for (int i = 0; i < n; i++) sum += arr[i];
+    return (double) sum / n;
+}
+
+int main(void) {
+    int scores[] = {90, 75, 88, 62, 95};
+    int n = sizeof(scores) / sizeof(scores[0]);
+    printf("개수 %d, 평균 %.1f\n", n, average(scores, n));
+
+    int matrix[2][3] = {{1, 2, 3}, {4, 5, 6}};
+    printf("matrix[1][2] = %d\n", matrix[1][2]);   // 6
+
+    char name[20] = "Gildong";
+    printf("%s 길이: %zu\n", name, strlen(name));   // 7
+    strcat(name, " Hong");                          // name 버퍼가 충분해야 함!
+    printf("%s\n", name);
+
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%s님 점수 %d", "영희", 95);   // 안전한 문자열 만들기
+    printf("%s\n", buf);
+
+    printf("%d\n", strcmp("apple", "banana") < 0);  // 1 (사전순으로 앞)
+
+    char word[] = "hello";
+    for (int i = 0; word[i] != '\0'; i++) word[i] -= 32;   // 대문자로 (ASCII)
+    printf("%s, 바이트 수 %zu\n", word, sizeof(word));       // HELLO, 6
+    return 0;
+}
+--- exercise
+문자열을 제자리에서 뒤집는 함수 `void reverse(char s[])` 를 작성하세요. `strlen` 으로 길이를 구하고 양 끝에서부터 문자를 교환합니다. `"abcdef"` → `"fedcba"`.
+--- solution
+#include <stdio.h>
+#include <string.h>
+
+void reverse(char s[]) {
+    size_t len = strlen(s);
+    for (size_t i = 0; i < len / 2; i++) {
+        char tmp = s[i];
+        s[i] = s[len - 1 - i];
+        s[len - 1 - i] = tmp;
+    }
+}
+
+int main(void) {
+    char s[] = "abcdef";
+    reverse(s);
+    printf("%s\n", s);   // fedcba
+    return 0;
+}
+--- quiz
+? `char s[] = "cat";` 에서 `sizeof(s)` 의 값은?
+- 3
++ 4
+- 8
+- 1
+! 문자열 끝의 널 문자 '\0'까지 포함하여 4바이트입니다.
+? C에서 두 문자열의 내용이 같은지 비교하는 방법은?
+- `a == b`
++ `strcmp(a, b) == 0`
+- `a.equals(b)`
+- `strlen(a) == strlen(b)`
+! ==는 배열의 시작 주소를 비교합니다.
+
+=== 초급 | pointers | 포인터 기초
+**포인터**는 메모리 **주소를 저장하는 변수**입니다. C의 가장 강력하면서도 어려운 개념입니다.
+
+## 기본 연산자
+- `&x`: 변수 x의 주소
+- `int *p = &x;`: int를 가리키는 포인터 p 선언
+- `*p`: p가 가리키는 곳의 값 (역참조). `*p = 10;` 은 x를 10으로 바꿈
+- `NULL`: 아무것도 가리키지 않음. 역참조하면 프로그램이 죽음(세그멘테이션 폴트)
+
+## 포인터가 필요한 이유
+1. 함수가 호출한 쪽의 변수를 **수정**하기 위해 (예: swap, scanf)
+2. 큰 데이터를 복사하지 않고 **주소만** 전달하기 위해
+3. 동적 메모리 할당 (다음 레슨)
+
+## 배열과 포인터
+배열 이름은 대부분의 식에서 **첫 원소의 주소**로 변환됩니다. 그래서 `arr[i]` 는 `*(arr + i)` 와 같습니다. 포인터에 1을 더하면 **가리키는 타입의 크기만큼** 주소가 증가합니다.
+--- code
+#include <stdio.h>
+
+void swap(int *a, int *b) {
+    int tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+void min_max(const int *arr, int n, int *min, int *max) {   // 여러 값 "반환"
+    *min = *max = arr[0];
+    for (int i = 1; i < n; i++) {
+        if (arr[i] < *min) *min = arr[i];
+        if (arr[i] > *max) *max = arr[i];
+    }
+}
+
+int main(void) {
+    int x = 10;
+    int *p = &x;
+    printf("x=%d, &x=%p, p=%p, *p=%d\n", x, (void *)&x, (void *)p, *p);
+    *p = 20;
+    printf("x=%d\n", x);                 // 20
+
+    int a = 1, b = 2;
+    swap(&a, &b);
+    printf("a=%d b=%d\n", a, b);         // a=2 b=1
+
+    int arr[] = {7, 3, 9, 1};
+    int *q = arr;                        // &arr[0]과 같음
+    printf("%d %d %d\n", arr[2], *(arr + 2), q[2]);   // 9 9 9
+    printf("q+1 주소 차이: %td바이트\n", (char *)(q + 1) - (char *)q);  // 4
+
+    int lo, hi;
+    min_max(arr, 4, &lo, &hi);
+    printf("min=%d max=%d\n", lo, hi);
+
+    int *np = NULL;
+    if (np != NULL) printf("%d\n", *np);  // NULL 검사 습관!
+    return 0;
+}
+--- exercise
+배열과 길이를 받아 배열의 모든 원소를 제곱한 값으로 **제자리 변경**하는 함수 `void square_all(int *arr, int n)` 을 포인터 연산(`*(arr + i)` 또는 포인터 증가)만 사용해 작성하세요.
+--- solution
+#include <stdio.h>
+
+void square_all(int *arr, int n) {
+    for (int *p = arr; p < arr + n; p++) {
+        *p = *p * *p;
+    }
+}
+
+int main(void) {
+    int a[] = {1, 2, 3, 4};
+    square_all(a, 4);
+    for (int i = 0; i < 4; i++) printf("%d ", a[i]);   // 1 4 9 16
+    printf("\n");
+    return 0;
+}
+--- quiz
+? `int x = 5; int *p = &x; *p = 8;` 실행 후 x의 값은?
+- 5
++ 8
+- x의 주소
+- 정의되지 않음
+! *p는 p가 가리키는 x 자체를 의미하므로 x가 8로 바뀝니다.
+? `int arr[5]; int *p = arr;` 일 때 `p + 2` 가 가리키는 곳은?
+- arr 시작 주소 + 2바이트
++ `arr[2]` 의 주소
+- `arr[0]` 의 값 + 2
+- 배열 밖
+! 포인터 산술은 가리키는 타입 크기(int는 보통 4바이트) 단위로 이동합니다.
+
+=== 중급 | memory | 동적 메모리 할당
+배열의 크기를 실행 중에 정해야 하거나, 함수가 끝나도 데이터가 살아 있어야 할 때 **힙(heap)** 메모리를 직접 할당합니다.
+
+## 메모리 영역
+- **스택**: 지역 변수. 함수가 끝나면 자동 해제. 크기 제한 있음
+- **힙**: `malloc` 으로 할당, `free` 로 **직접 해제**해야 함
+- 데이터/코드 영역: 전역 변수, static, 프로그램 코드
+
+## 함수 (`<stdlib.h>`)
+- `malloc(바이트)`: 할당 (초기화 안 됨). 실패하면 `NULL` 반환
+- `calloc(개수, 크기)`: 0으로 초기화하여 할당
+- `realloc(ptr, 새크기)`: 크기 변경 (주소가 바뀔 수 있음)
+- `free(ptr)`: 해제
+
+## 흔한 실수
+- **메모리 누수**: free를 잊음 → 장시간 실행 프로그램의 메모리가 계속 증가
+- **해제 후 사용(use-after-free)**, **이중 해제**: 심각한 보안 취약점
+- 해제 후 포인터를 `NULL` 로 설정하는 습관, Valgrind / AddressSanitizer(`-fsanitize=address`)로 검사
+--- code
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int *make_range(int n) {
+    int *arr = malloc(n * sizeof *arr);       // 힙에 할당 → 함수가 끝나도 유지
+    if (arr == NULL) return NULL;
+    for (int i = 0; i < n; i++) arr[i] = i * i;
+    return arr;
+}
+
+char *duplicate(const char *s) {
+    char *copy = malloc(strlen(s) + 1);       // '\0' 자리 +1
+    if (copy) strcpy(copy, s);
+    return copy;
+}
+
+int main(void) {
+    int n = 5;
+    int *squares = make_range(n);
+    if (!squares) { fprintf(stderr, "메모리 부족\n"); return 1; }
+    for (int i = 0; i < n; i++) printf("%d ", squares[i]);
+    printf("\n");
+
+    // 동적 배열 늘리기
+    int *bigger = realloc(squares, 10 * sizeof *bigger);
+    if (!bigger) { free(squares); return 1; } // realloc 실패 시 원본은 그대로
+    squares = bigger;
+    for (int i = n; i < 10; i++) squares[i] = i * i;
+    printf("마지막: %d\n", squares[9]);        // 81
+
+    char *name = duplicate("코드 아카데미");
+    printf("%s\n", name);
+
+    free(squares);
+    squares = NULL;                            // 매달린 포인터 방지
+    free(name);
+    return 0;
+}
+--- exercise
+사용자로부터 개수 n을 받는다고 가정하고(여기서는 `n = 6`), `calloc` 으로 n개의 `double` 배열을 만들어 `1.5 * i` 값을 채운 뒤 합계를 출력하고 메모리를 해제하세요. 할당 실패 처리도 넣으세요.
+--- solution
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void) {
+    int n = 6;
+    double *arr = calloc(n, sizeof(double));
+    if (arr == NULL) {
+        fprintf(stderr, "할당 실패\n");
+        return 1;
+    }
+    double sum = 0;
+    for (int i = 0; i < n; i++) {
+        arr[i] = 1.5 * i;
+        sum += arr[i];
+    }
+    printf("합계: %.1f\n", sum);   // 22.5
+    free(arr);
+    return 0;
+}
+--- quiz
+? `malloc` 으로 할당한 메모리를 `free` 하지 않으면?
+- 함수가 끝날 때 자동으로 해제된다
++ 메모리 누수가 발생한다
+- 컴파일 오류가 난다
+- 다음 malloc 때 재사용된다
+! 힙 메모리는 직접 해제해야 합니다(프로그램 종료 시에는 OS가 회수).
+? `realloc` 사용 시 올바른 패턴은?
+- `p = realloc(p, size);` 를 그대로 사용
++ 결과를 임시 포인터에 받아 NULL인지 확인한 뒤 대입
+- realloc 후 원래 포인터를 free
+- realloc 전에 free 호출
+! realloc이 실패하면 NULL을 반환하는데, 바로 p에 대입하면 원래 메모리 주소를 잃어 누수가 생깁니다.
+
+=== 중급 | structs | 구조체와 typedef
+**구조체(struct)** 는 서로 다른 타입의 데이터를 하나로 묶은 사용자 정의 타입입니다.
+
+## 문법
+- 정의: `struct Point { int x; int y; };`
+- `typedef struct { ... } Point;` 로 별칭을 만들면 `struct` 키워드 없이 사용
+- 멤버 접근: 변수는 `p.x`, 포인터는 `ptr->x` (`(*ptr).x` 와 같음)
+- 지정 초기화(C99): `Point p = { .x = 1, .y = 2 };`
+
+## 함수에 전달
+구조체를 값으로 넘기면 **전체가 복사**됩니다. 큰 구조체는 포인터로 넘기고, 수정하지 않을 경우 `const` 를 붙입니다.
+
+## enum과 union
+- `enum Color { RED, GREEN, BLUE };` — 이름 있는 정수 상수
+- `union` — 멤버들이 같은 메모리를 공유 (한 번에 하나만 유효)
+
+## 연결 리스트
+구조체가 자기 타입의 포인터를 멤버로 가지면 연결 리스트, 트리 같은 자료구조를 만들 수 있습니다.
+--- code
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef enum { ACTIVE, SUSPENDED } Status;
+
+typedef struct {
+    char name[32];
+    int age;
+    double score;
+    Status status;
+} Student;
+
+void print_student(const Student *s) {
+    printf("%-6s %3d세 %5.1f점 %s\n", s->name, s->age, s->score,
+           s->status == ACTIVE ? "재학" : "휴학");
+}
+
+void add_bonus(Student *s, double bonus) {
+    s->score += bonus;
+}
+
+typedef struct Node {
+    int value;
+    struct Node *next;
+} Node;
+
+Node *push_front(Node *head, int value) {
+    Node *n = malloc(sizeof *n);
+    n->value = value;
+    n->next = head;
+    return n;
+}
+
+int main(void) {
+    Student list[] = {
+        {"길동", 21, 88.5, ACTIVE},
+        {.name = "영희", .age = 22, .score = 92.0, .status = SUSPENDED},
+    };
+    add_bonus(&list[0], 5);
+    for (int i = 0; i < 2; i++) print_student(&list[i]);
+
+    Node *head = NULL;
+    for (int i = 1; i <= 3; i++) head = push_front(head, i * 10);
+    for (Node *cur = head; cur; cur = cur->next) printf("%d -> ", cur->value);
+    printf("NULL\n");                 // 30 -> 20 -> 10 -> NULL
+
+    while (head) {                    // 리스트 해제
+        Node *next = head->next;
+        free(head);
+        head = next;
+    }
+    return 0;
+}
+--- exercise
+`typedef struct { char title[50]; int price; } Book;` 을 정의하고, Book 배열에서 가장 비싼 책의 포인터를 반환하는 `Book *most_expensive(Book books[], int n)` 을 작성해 제목과 가격을 출력하세요.
+--- solution
+#include <stdio.h>
+
+typedef struct {
+    char title[50];
+    int price;
+} Book;
+
+Book *most_expensive(Book books[], int n) {
+    Book *best = &books[0];
+    for (int i = 1; i < n; i++)
+        if (books[i].price > best->price) best = &books[i];
+    return best;
+}
+
+int main(void) {
+    Book books[] = {{"C 언어 입문", 25000}, {"운영체제", 38000}, {"자료구조", 31000}};
+    Book *b = most_expensive(books, 3);
+    printf("%s: %d원\n", b->title, b->price);   // 운영체제: 38000원
+    return 0;
+}
+--- quiz
+? 구조체 포인터 `p` 로 멤버 `age` 에 접근하는 올바른 표현은?
+- `p.age`
++ `p->age`
+- `*p.age`
+- `p::age`
+! p->age는 (*p).age의 축약입니다. *p.age는 연산자 우선순위 때문에 *(p.age)로 해석됩니다.
+? 큰 구조체를 함수에 전달할 때 포인터를 쓰는 주된 이유는?
++ 전체 복사를 피해 성능을 높이기 위해
+- 구조체는 값으로 전달할 수 없어서
+- 문법상 필수라서
+- 메모리를 자동 해제하기 위해
+! 값 전달은 구조체 전체를 복사합니다. 수정하지 않는다면 const 포인터로 의도를 표현하세요.
+
+=== 중급 | files | 파일 입출력과 전처리기
+## 파일 입출력 (`<stdio.h>`)
+- `FILE *fp = fopen("파일", "모드");` — 모드: `"r"`, `"w"`, `"a"`, 바이너리는 `"rb"`, `"wb"`
+- 실패하면 `NULL` 을 반환하므로 반드시 확인
+- 쓰기: `fprintf`, `fputs`, `fwrite` / 읽기: `fgets`, `fscanf`, `fread`
+- 사용 후 `fclose(fp)`
+
+## 전처리기
+컴파일 전에 소스 코드를 텍스트 수준에서 변환합니다.
+- `#define PI 3.14159` — 상수 매크로
+- `#define SQUARE(x) ((x) * (x))` — 함수형 매크로. **괄호를 꼭** 쳐야 연산자 우선순위 버그를 피함
+- `#ifdef DEBUG ... #endif` — 조건부 컴파일
+- 헤더 가드: `#ifndef MY_H` / `#define MY_H` / `#endif` — 중복 포함 방지
+
+## 여러 파일로 나누기
+선언은 `.h`, 구현은 `.c` 에 두고 `gcc main.c util.c -o app` 처럼 함께 컴파일합니다. 큰 프로젝트에서는 Make나 CMake를 씁니다.
+--- code
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_LINE 256
+#define SQUARE(x) ((x) * (x))
+#define DEBUG 1
+
+#if DEBUG
+  #define LOG(msg) fprintf(stderr, "[DEBUG] %s:%d %s\n", __FILE__, __LINE__, msg)
+#else
+  #define LOG(msg)
+#endif
+
+int main(void) {
+    FILE *fp = fopen("scores.txt", "w");
+    if (fp == NULL) {
+        perror("파일 열기 실패");
+        return EXIT_FAILURE;
+    }
+    fprintf(fp, "길동 88\n영희 95\n철수 72\n");
+    fclose(fp);
+    LOG("파일 쓰기 완료");
+
+    fp = fopen("scores.txt", "r");
+    if (!fp) { perror("fopen"); return EXIT_FAILURE; }
+
+    char name[32];
+    int score, total = 0, count = 0;
+    while (fscanf(fp, "%31s %d", name, &score) == 2) {
+        printf("%s: %d\n", name, score);
+        total += score;
+        count++;
+    }
+    fclose(fp);
+    printf("평균: %.2f\n", (double) total / count);
+
+    printf("SQUARE(3+1) = %d\n", SQUARE(3 + 1));   // 16 (괄호 덕분)
+    return 0;
+}
+--- exercise
+텍스트 파일 `input.txt` 를 `fgets` 로 한 줄씩 읽어 줄 번호와 함께 출력하고, 전체 줄 수와 문자 수(바이트)를 세어 출력하는 프로그램을 작성하세요. 파일을 열 수 없으면 `perror` 로 오류 메시지를 출력하세요. (예시 정답은 혼자서도 실행되도록 먼저 샘플 `input.txt` 를 만든 뒤 읽습니다.)
+--- solution
+#include <stdio.h>
+#include <string.h>
+
+/* 실습용 샘플 파일을 만듭니다 (이미 input.txt가 있다면 이 함수 호출을 지워도 됩니다) */
+static int create_sample(const char *path) {
+    FILE *out = fopen(path, "w");
+    if (!out) return -1;
+    fputs("첫 번째 줄입니다\n", out);
+    fputs("Hello, C file I/O!\n", out);
+    fputs("마지막 줄\n", out);
+    fclose(out);
+    return 0;
+}
+
+int main(void) {
+    if (create_sample("input.txt") != 0) {
+        perror("샘플 파일 생성 실패");
+        return 1;
+    }
+
+    FILE *fp = fopen("input.txt", "r");
+    if (!fp) {
+        perror("input.txt");
+        return 1;
+    }
+    char line[512];
+    int lines = 0;
+    size_t bytes = 0;
+    while (fgets(line, sizeof line, fp)) {
+        lines++;
+        bytes += strlen(line);
+        printf("%3d: %s", lines, line);
+    }
+    fclose(fp);
+    printf("\n총 %d줄, %zu바이트\n", lines, bytes);
+    return 0;
+}
+--- quiz
+? `#define DOUBLE(x) x * 2` 일 때 `DOUBLE(1 + 2)` 의 값은?
+- 6
++ 5
+- 3
+- 컴파일 오류
+! 1 + 2 * 2 로 치환되어 5가 됩니다. `((x) * 2)` 처럼 괄호를 쳐야 합니다.
+? 헤더 가드(`#ifndef ... #define ... #endif`)의 목적은?
+- 헤더 파일 암호화
++ 같은 헤더가 여러 번 포함되어 중복 정의 오류가 나는 것을 방지
+- 컴파일 속도 저하 방지만을 위해
+- 매크로 삭제
+! 여러 파일이 같은 헤더를 포함해도 한 번만 처리되게 합니다. `#pragma once` 도 널리 쓰입니다.
+
+=== 고급 | function-pointers | 함수 포인터와 콜백
+함수도 메모리에 존재하므로 **함수의 주소**를 포인터에 담을 수 있습니다.
+
+## 문법
+`int (*op)(int, int) = add;` — int 두 개를 받아 int를 반환하는 함수를 가리키는 포인터. 호출은 `op(3, 4)`. `typedef int (*BinOp)(int, int);` 로 읽기 쉽게 만들 수 있습니다.
+
+## 활용
+- **콜백**: 표준 라이브러리 `qsort` 는 비교 함수를 인자로 받아 어떤 타입이든 정렬합니다.
+- **디스패치 테이블**: 함수 포인터 배열로 switch 문을 대체
+- 이벤트 핸들러, 플러그인 구조, 상태 머신
+
+## void 포인터
+`void *` 는 **타입이 없는 범용 포인터**로, 어떤 타입의 주소든 담을 수 있습니다. 사용할 때 원래 타입으로 캐스팅해야 합니다. `qsort`, `malloc` 이 void 포인터를 사용합니다.
+--- code
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef int (*BinOp)(int, int);
+
+int add(int a, int b) { return a + b; }
+int sub(int a, int b) { return a - b; }
+int mul(int a, int b) { return a * b; }
+
+int apply(BinOp op, int a, int b) { return op(a, b); }
+
+int cmp_int_desc(const void *a, const void *b) {
+    int x = *(const int *)a, y = *(const int *)b;
+    return (x < y) - (x > y);          // 내림차순, 오버플로 없는 비교
+}
+
+typedef struct { char name[16]; int age; } Person;
+
+int cmp_by_name(const void *a, const void *b) {
+    return strcmp(((const Person *)a)->name, ((const Person *)b)->name);
+}
+
+int main(void) {
+    BinOp table[] = { add, sub, mul };   // 디스패치 테이블
+    const char *names[] = { "+", "-", "*" };
+    for (int i = 0; i < 3; i++)
+        printf("7 %s 3 = %d\n", names[i], apply(table[i], 7, 3));
+
+    int nums[] = {5, 2, 9, 1, 7};
+    qsort(nums, 5, sizeof nums[0], cmp_int_desc);
+    for (int i = 0; i < 5; i++) printf("%d ", nums[i]);    // 9 7 5 2 1
+    printf("\n");
+
+    Person people[] = {{"Mina", 30}, {"Alex", 25}, {"Jun", 41}};
+    qsort(people, 3, sizeof people[0], cmp_by_name);
+    for (int i = 0; i < 3; i++) printf("%s(%d) ", people[i].name, people[i].age);
+    printf("\n");                        // Alex(25) Jun(41) Mina(30)
+    return 0;
+}
+--- exercise
+정수 배열에 함수를 적용해 새 값으로 바꾸는 `void map(int *arr, int n, int (*fn)(int))` 를 작성하고, "두 배로", "제곱", "절댓값" 함수를 각각 적용해 보세요.
+--- solution
+#include <stdio.h>
+
+void map(int *arr, int n, int (*fn)(int)) {
+    for (int i = 0; i < n; i++) arr[i] = fn(arr[i]);
+}
+
+int twice(int x) { return x * 2; }
+int square(int x) { return x * x; }
+int absval(int x) { return x < 0 ? -x : x; }
+
+void print(const int *a, int n) {
+    for (int i = 0; i < n; i++) printf("%d ", a[i]);
+    printf("\n");
+}
+
+int main(void) {
+    int a[] = {-3, 1, -2, 4};
+    map(a, 4, absval); print(a, 4);   // 3 1 2 4
+    map(a, 4, twice);  print(a, 4);   // 6 2 4 8
+    map(a, 4, square); print(a, 4);   // 36 4 16 64
+    return 0;
+}
+--- quiz
+? `qsort` 의 비교 함수가 `void *` 매개변수를 받는 이유는?
++ 어떤 타입의 배열이든 정렬할 수 있는 범용 함수이기 때문
+- 속도를 높이기 위해
+- 포인터를 해제하기 위해
+- 문자열만 정렬하기 위해
+! 비교 함수 안에서 실제 타입으로 캐스팅하여 사용합니다.
+? `int (*fp)(double);` 의 의미는?
+- double을 반환하는 함수
++ double을 받아 int를 반환하는 함수를 가리키는 포인터
+- int 포인터를 반환하는 함수
+- int 배열
+! 괄호가 없으면 `int *fp(double)` 은 int 포인터를 반환하는 함수 선언이 됩니다.
+
+=== 고급 | bits-ub | 비트 연산과 정의되지 않은 동작
+## 비트 연산자
+- `&` AND, `|` OR, `^` XOR, `~` NOT, `<<` 왼쪽 시프트, `>>` 오른쪽 시프트
+- 임베디드에서 하드웨어 레지스터 제어, 플래그 관리, 압축, 암호화 등에 사용
+- 플래그 패턴: 설정 `flags |= FLAG`, 해제 `flags &= ~FLAG`, 토글 `flags ^= FLAG`, 검사 `flags & FLAG`
+
+## 정의되지 않은 동작(Undefined Behavior)
+C 표준이 결과를 정의하지 않은 코드로, 컴파일러는 **이런 일이 없다고 가정하고 최적화**합니다. 그래서 디버그 빌드에서는 되던 코드가 최적화 빌드에서 이상하게 동작할 수 있습니다.
+- 배열 범위 밖 접근, NULL/해제된 포인터 역참조
+- 부호 있는 정수 오버플로
+- 초기화하지 않은 변수 읽기
+- 한 식에서 같은 변수를 여러 번 수정: `i = i++ + 1;`
+
+## 안전한 C를 위한 도구
+`-Wall -Wextra -Werror`, `-fsanitize=address,undefined`, 정적 분석기(clang-tidy, cppcheck), Valgrind. 메모리 안전성이 중요하다면 Rust 같은 언어도 고려하세요.
+--- code
+#include <stdio.h>
+#include <stdint.h>
+
+#define FLAG_READ   (1u << 0)   // 0001
+#define FLAG_WRITE  (1u << 1)   // 0010
+#define FLAG_EXEC   (1u << 2)   // 0100
+
+void print_bits(uint8_t v) {
+    for (int i = 7; i >= 0; i--) putchar((v >> i) & 1 ? '1' : '0');
+    putchar('\n');
+}
+
+int count_ones(uint32_t x) {
+    int c = 0;
+    while (x) {
+        x &= x - 1;            // 가장 낮은 1비트 제거 (Kernighan 트릭)
+        c++;
+    }
+    return c;
+}
+
+int main(void) {
+    unsigned perm = 0;
+    perm |= FLAG_READ | FLAG_WRITE;              // 읽기+쓰기 설정
+    printf("쓰기 권한? %s\n", (perm & FLAG_WRITE) ? "예" : "아니오");
+    perm &= ~FLAG_WRITE;                         // 쓰기 해제
+    perm ^= FLAG_EXEC;                           // 실행 토글
+    print_bits((uint8_t) perm);                  // 00000101
+
+    printf("13의 1비트 개수: %d\n", count_ones(13));   // 1101 → 3
+    printf("짝수? %s\n", (42 & 1) == 0 ? "예" : "아니오");
+    printf("5 << 3 = %d (5 * 8)\n", 5 << 3);
+
+    int a = 6, b = 9;
+    a ^= b; b ^= a; a ^= b;                      // XOR 교환 (실무에선 tmp 변수 권장)
+    printf("a=%d b=%d\n", a, b);
+
+    uint8_t r = 0x12, g = 0xAB, bl = 0xEF;
+    uint32_t rgb = ((uint32_t) r << 16) | ((uint32_t) g << 8) | bl;
+    printf("색상 코드: #%06X\n", rgb);            // #12ABEF
+    return 0;
+}
+--- exercise
+정수 n이 2의 거듭제곱인지 비트 연산 한 줄로 판별하는 함수 `int is_power_of_two(unsigned n)` 을 작성하세요. (힌트: 2의 거듭제곱은 1비트가 하나뿐 → `n & (n - 1)`)
+--- solution
+#include <stdio.h>
+
+int is_power_of_two(unsigned n) {
+    return n != 0 && (n & (n - 1)) == 0;
+}
+
+int main(void) {
+    unsigned tests[] = {0, 1, 2, 3, 16, 24, 1024};
+    for (int i = 0; i < 7; i++)
+        printf("%u → %s\n", tests[i], is_power_of_two(tests[i]) ? "예" : "아니오");
+    return 0;
+}
+--- quiz
+? 변수 `flags` 에서 특정 비트 `F` 만 0으로 만드는 코드는?
+- `flags |= F;`
++ `flags &= ~F;`
+- `flags ^= F;`
+- `flags = F;`
+! ~F는 F 위치만 0인 마스크이므로 AND하면 그 비트만 지워집니다.
+? 다음 중 C에서 **정의되지 않은 동작**이 아닌 것은?
+- 배열 범위를 벗어난 읽기
+- `INT_MAX + 1` (int 연산)
++ `UINT_MAX + 1u` (unsigned 연산)
+- 해제된 포인터 역참조
+! 부호 없는 정수는 모듈로 산술로 0이 되도록 표준에 정의되어 있습니다.

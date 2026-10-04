@@ -1,0 +1,750 @@
+@id bash
+@name Bash/Shell
+@badge $_
+@color #4eaa25
+@difficulty 2
+@category 스크립트
+@year 1989
+@uses 리눅스 서버 관리 · 자동화 스크립트 · CI/CD · 개발 환경
+@desc 리눅스·macOS 터미널의 기본 셸입니다. 파일 관리, 텍스트 처리, 반복 작업 자동화, 배포 스크립트 등 개발자라면 누구나 매일 쓰게 되는 필수 도구입니다.
+
+=== 입문 | hello | 터미널과 첫 스크립트
+**셸(Shell)** 은 사용자가 입력한 명령을 운영체제에 전달하는 프로그램이고, **Bash** 는 리눅스에서 가장 널리 쓰이는 셸입니다. macOS는 기본 셸이 zsh지만 문법이 거의 같습니다. Windows에서는 WSL이나 Git Bash로 사용할 수 있습니다.
+
+## 첫 스크립트 만들기
+1. `hello.sh` 파일을 만들고 첫 줄에 **셔뱅(shebang)** `#!/usr/bin/env bash` 을 씁니다.
+2. 실행 권한 부여: `chmod +x hello.sh`
+3. 실행: `./hello.sh` (또는 `bash hello.sh`)
+
+## 기본 명령
+- `echo`: 출력, `printf`: 형식 지정 출력
+- `pwd`: 현재 디렉터리, `whoami`: 사용자 이름, `date`: 날짜
+- `#` 뒤는 주석
+- `man 명령` 또는 `명령 --help` 로 도움말 보기
+--- code
+#!/usr/bin/env bash
+# 나의 첫 번째 셸 스크립트
+
+echo "Hello, World!"
+echo "현재 디렉터리: $(pwd)"
+echo "셸 버전: ${BASH_VERSION%%(*}"
+
+printf "%s님, 환영합니다!\n" "길동"
+printf "%-8s|%5d|\n" "사과" 3 "바나나" 12
+printf "원주율: %.2f\n" 3.14159
+
+echo -n "줄바꿈 없이 "
+echo "출력"
+echo -e "탭\t문자와\n줄바꿈"
+--- exercise
+`printf` 를 사용해 이름, 나이, 좋아하는 명령어를 한 줄씩 출력하는 스크립트를 작성하세요. 나이는 정수 형식(`%d`)으로 출력합니다.
+--- solution
+#!/usr/bin/env bash
+printf "이름: %s\n" "홍길동"
+printf "나이: %d살\n" 30
+printf "좋아하는 명령어: %s\n" "grep"
+--- quiz
+? 스크립트 첫 줄의 `#!/usr/bin/env bash` 를 무엇이라고 하나요?
+- 주석 헤더
++ 셔뱅(shebang)
+- 환경 변수
+- 파이프
+! 이 스크립트를 어떤 인터프리터로 실행할지 운영체제에 알려 줍니다.
+? 스크립트 파일에 실행 권한을 주는 명령은?
+- `run +x hello.sh`
++ `chmod +x hello.sh`
+- `exec hello.sh`
+- `sudo hello.sh`
+! 실행 권한이 있어야 ./hello.sh 로 바로 실행할 수 있습니다.
+
+=== 입문 | files | 파일과 디렉터리 다루기
+## 탐색
+- `pwd`(현재 위치), `ls -la`(숨김 파일 포함 상세 목록), `cd 경로`
+- 경로: `/`(루트), `~`(홈), `.`(현재), `..`(상위)
+
+## 생성·복사·이동·삭제
+- `mkdir -p a/b/c`: 중간 디렉터리까지 생성
+- `touch file`: 빈 파일 생성(또는 수정 시각 갱신)
+- `cp src dst`, `cp -r dir1 dir2`: 복사
+- `mv old new`: 이동 또는 이름 변경
+- `rm file`, `rm -r dir`: 삭제 — **휴지통이 없습니다! 특히 `rm -rf` 는 신중하게**
+
+## 내용 보기
+`cat`(전체), `head -n 5`, `tail -n 5`, `tail -f log`(실시간), `less`(페이지 단위), `wc -l`(줄 수)
+
+## 와일드카드(glob)
+`*.txt`(모든 txt), `file?.log`(한 글자), `{a,b}.md`(중괄호 확장)
+--- code
+#!/usr/bin/env bash
+# 임시 디렉터리에서 안전하게 실습합니다
+work=$(mktemp -d)
+cd "$work" || exit 1
+
+mkdir -p project/{src,docs,tests}
+touch project/src/{main,utils}.py project/docs/README.md
+echo "print('hi')" > project/src/main.py
+
+ls project
+ls project/src
+
+cp project/src/main.py project/src/main_backup.py
+mv project/docs/README.md project/README.md
+ls project/src/*.py | wc -l          # py 파일 개수: 3
+
+cat project/src/main.py
+seq 1 100 > numbers.txt
+head -n 3 numbers.txt
+tail -n 2 numbers.txt
+wc -l < numbers.txt                   # 100
+
+rm project/src/main_backup.py
+rm -r project/tests
+find project -type f | sort
+
+cd / && rm -rf "$work"                # 실습 디렉터리 정리
+--- exercise
+임시 디렉터리 안에 `photos/2025`, `photos/2026` 디렉터리를 한 번에 만들고, 각 디렉터리에 `img1.jpg`~`img3.jpg` 빈 파일을 만든 뒤(중괄호 확장 사용), 전체 jpg 파일 개수를 출력하세요.
+--- solution
+#!/usr/bin/env bash
+work=$(mktemp -d)
+cd "$work" || exit 1
+
+mkdir -p photos/{2025,2026}
+touch photos/{2025,2026}/img{1..3}.jpg
+find photos -name "*.jpg" | wc -l    # 6
+
+cd / && rm -rf "$work"
+--- quiz
+? 중간 디렉터리까지 한 번에 만드는 명령은?
+- `mkdir -r a/b/c`
++ `mkdir -p a/b/c`
+- `touch -p a/b/c`
+- `md a/b/c`
+! -p(parents) 옵션은 이미 있으면 오류도 내지 않습니다.
+? `rm` 으로 삭제한 파일에 대한 설명으로 옳은 것은?
+- 휴지통으로 이동한다
++ 기본적으로 복구할 수 없이 삭제된다
+- 하루 뒤 삭제된다
+- 관리자만 삭제할 수 있다
+! 중요한 작업 전에는 백업하거나 rm -i 로 확인하세요.
+
+=== 입문 | variables | 변수, 따옴표, 입력
+## 변수
+- 대입: `name="길동"` — **`=` 양옆에 공백이 있으면 안 됩니다!**
+- 사용: `$name` 또는 `${name}`
+- 명령 치환: `today=$(date +%F)`
+- 산술: `$(( a + b ))`, `(( count++ ))`
+- 환경 변수: `$HOME`, `$PATH`, `$USER` / 자식 프로세스에 넘기려면 `export`
+
+## 따옴표 규칙 (매우 중요)
+- 큰따옴표 `"..."`: 변수 치환 O, 단어 분리 X → **변수는 항상 큰따옴표로 감싸세요**
+- 작은따옴표 `'...'`: 모든 것을 글자 그대로
+- 공백이 있는 파일명에서 `$file` 대신 `"$file"` 을 쓰지 않으면 버그가 납니다.
+
+## 입력
+`read -r -p "이름: " name` — 사용자 입력을 변수에 저장
+--- code
+#!/usr/bin/env bash
+name="길동"
+greeting='안녕하세요'
+echo "$greeting, ${name}님!"
+echo '작은따옴표: $name 은 치환 안 됨'
+
+today=$(date +%Y)
+echo "올해: $today"
+
+a=7
+b=3
+echo "합: $((a + b)), 곱: $((a * b)), 몫: $((a / b)), 나머지: $((a % b))"
+count=0
+(( count++ ))
+(( count += 10 ))
+echo "count=$count"                 # 11
+echo "소수 계산은 awk로: $(awk 'BEGIN { printf "%.2f", 7/3 }')"
+
+file="내 문서.txt"
+touch "/tmp/$file"
+ls "/tmp/$file" && rm "/tmp/$file"   # 따옴표가 없으면 '내'와 '문서.txt' 두 개로 분리됨
+
+echo "홈: $HOME, 사용자: ${USER:-unknown}"
+echo "기본값: ${UNDEFINED_VAR:-기본값}"
+
+read -r -p "이름을 입력하세요: " user_name
+echo "입력한 이름: $user_name"
+--- exercise
+사용자에게 두 정수를 한 줄로 입력받아(`read -r x y`) 합, 차, 곱을 출력하고, 나눗셈 결과를 awk로 소수점 2자리까지 출력하세요.
+--- solution
+#!/usr/bin/env bash
+read -r -p "두 정수: " x y
+echo "합: $((x + y))"
+echo "차: $((x - y))"
+echo "곱: $((x * y))"
+awk -v a="$x" -v b="$y" 'BEGIN { printf "나눗셈: %.2f\n", a / b }'
+--- quiz
+? Bash에서 올바른 변수 대입은?
+- `name = "길동"`
++ `name="길동"`
+- `$name="길동"`
+- `set name "길동"`
+! = 양옆에 공백이 있으면 name이라는 명령을 실행하려 합니다.
+? 변수를 큰따옴표로 감싸야 하는 주된 이유는?
++ 값에 공백이 있을 때 여러 단어로 쪼개지는 것을 막기 위해
+- 실행 속도를 높이기 위해
+- 변수를 상수로 만들기 위해
+- 작은따옴표는 문법 오류라서
+! "$file" 처럼 쓰는 습관이 셸 스크립트 버그의 대부분을 막아 줍니다.
+
+=== 초급 | conditions | 조건문과 테스트
+## if 문
+```bash
+if [[ 조건 ]]; then
+  ...
+elif [[ 조건 ]]; then
+  ...
+else
+  ...
+fi
+```
+`[[ ]]` 는 Bash의 개선된 테스트 문법입니다(구형 `[ ]` 보다 안전). 산술 비교는 `(( a > b ))` 도 편리합니다.
+
+## 비교 연산자
+- 숫자: `-eq`, `-ne`, `-lt`, `-le`, `-gt`, `-ge`
+- 문자열: `==`, `!=`, `-z`(빈 문자열), `-n`(비어 있지 않음), `=~`(정규식)
+- 파일: `-e`(존재), `-f`(일반 파일), `-d`(디렉터리), `-r/-w/-x`(권한)
+- 논리: `&&`, `||`, `!`
+
+## 종료 코드
+모든 명령은 종료 코드를 남깁니다. **0이 성공**, 그 외는 실패이며 `$?` 로 확인합니다. `명령1 && 명령2`(성공 시), `명령1 || 명령2`(실패 시).
+
+## case
+```bash
+case "$x" in
+  start) ... ;;
+  stop|halt) ... ;;
+  *) ... ;;
+esac
+```
+--- code
+#!/usr/bin/env bash
+score=85
+if (( score >= 90 )); then
+  echo "A"
+elif [[ $score -ge 80 ]]; then
+  echo "B"
+else
+  echo "C"
+fi
+
+name=""
+if [[ -z "$name" ]]; then
+  echo "이름이 비어 있습니다"
+fi
+
+email="gildong@example.com"
+if [[ "$email" =~ ^[^@]+@[^@]+\.[a-z]+$ ]]; then
+  echo "올바른 이메일 형식"
+fi
+
+if [[ -d /tmp && -w /tmp ]]; then
+  echo "/tmp는 쓰기 가능한 디렉터리"
+fi
+[[ -f /etc/passwd ]] && echo "/etc/passwd 존재"
+
+grep -q "root" /etc/passwd
+echo "grep 종료 코드: $?"            # 0 = 찾음
+ls /없는경로 2>/dev/null || echo "ls 실패 → 대체 동작 실행"
+
+action="restart"
+case "$action" in
+  start)        echo "시작합니다" ;;
+  stop|halt)    echo "중지합니다" ;;
+  restart)      echo "재시작합니다" ;;
+  *)            echo "알 수 없는 명령: $action" ;;
+esac
+--- exercise
+변수 `path` 에 경로를 넣고, 존재하지 않으면 "없음", 디렉터리면 "디렉터리 (항목 N개)", 일반 파일이면 "파일 (N줄)"을 출력하는 스크립트를 작성하세요. `/etc`, `/etc/hostname`, `/nope` 로 테스트하세요.
+--- solution
+#!/usr/bin/env bash
+check() {
+  local path="$1"
+  if [[ ! -e "$path" ]]; then
+    echo "$path: 없음"
+  elif [[ -d "$path" ]]; then
+    echo "$path: 디렉터리 (항목 $(ls -A "$path" | wc -l)개)"
+  elif [[ -f "$path" ]]; then
+    echo "$path: 파일 ($(wc -l < "$path")줄)"
+  fi
+}
+for p in /etc /etc/hostname /nope; do
+  check "$p"
+done
+--- quiz
+? 명령이 성공했을 때의 종료 코드는?
++ 0
+- 1
+- -1
+- true 문자열
+! 0이 성공이고 1~255는 실패 유형을 나타냅니다.
+? 파일이 디렉터리인지 검사하는 조건은?
+- `[[ -f path ]]`
++ `[[ -d path ]]`
+- `[[ -e path ]]`
+- `[[ -z path ]]`
+! -f는 일반 파일, -e는 존재 여부, -z는 빈 문자열 검사입니다.
+
+=== 초급 | loops | 반복문
+## for
+- 목록: `for fruit in 사과 배 포도; do ... done`
+- 범위: `for i in {1..5}`, `for i in $(seq 1 2 9)`
+- C 스타일: `for (( i = 0; i < 5; i++ ))`
+- 파일: `for f in *.txt` — 파일명에 공백이 있어도 안전 (항상 `"$f"` 로 사용)
+
+## while / until
+- `while [[ 조건 ]]; do ... done`
+- **파일을 한 줄씩 읽기**: `while IFS= read -r line; do ... done < file.txt`
+- `until` 은 조건이 참이 될 때까지 반복
+- `break`, `continue`
+
+> `for line in $(cat file)` 은 공백 단위로 쪼개지므로 줄 단위 읽기에 쓰면 안 됩니다. `while read` 를 사용하세요.
+--- code
+#!/usr/bin/env bash
+for fruit in 사과 바나나 포도; do
+  echo "과일: $fruit"
+done
+
+for i in {1..5}; do printf "%d " "$i"; done; echo
+for (( i = 10; i > 0; i -= 3 )); do printf "%d " "$i"; done; echo   # 10 7 4 1
+
+sum=0
+for n in $(seq 1 100); do (( sum += n )); done
+echo "1~100 합: $sum"
+
+work=$(mktemp -d)
+touch "$work/보고서 1.txt" "$work/메모.txt" "$work/사진.jpg"
+for f in "$work"/*.txt; do
+  echo "텍스트 파일: $(basename "$f")"
+done
+
+printf "길동,30,서울\n영희,25,부산\n철수,35,대구\n" > "$work/users.csv"
+while IFS=, read -r name age city; do
+  echo "$name($age) - $city"
+done < "$work/users.csv"
+
+count=0
+while true; do
+  (( count++ ))
+  (( count % 2 == 0 )) && continue
+  (( count > 7 )) && break
+  printf "%d " "$count"
+done
+echo
+
+n=1
+until (( n > 100 )); do (( n *= 2 )); done
+echo "100을 넘는 첫 2의 거듭제곱: $n"
+rm -rf "$work"
+--- exercise
+임시 디렉터리에 `log1.txt`~`log5.txt` 파일을 만들고 각 파일에 `seq` 로 i*10줄을 쓰세요(log3.txt는 30줄). 그다음 반복문으로 각 파일의 줄 수를 출력하고, 20줄을 넘는 파일만 "큰 파일" 표시를 붙이세요.
+--- solution
+#!/usr/bin/env bash
+work=$(mktemp -d)
+for i in {1..5}; do
+  seq 1 $(( i * 10 )) > "$work/log$i.txt"
+done
+for f in "$work"/log*.txt; do
+  lines=$(wc -l < "$f")
+  mark=""
+  (( lines > 20 )) && mark=" ← 큰 파일"
+  echo "$(basename "$f"): ${lines}줄$mark"
+done
+rm -rf "$work"
+--- quiz
+? 파일을 한 줄씩 안전하게 읽는 관용구는?
+- `for line in $(cat file)`
++ `while IFS= read -r line; do ...; done < file`
+- `read file | for line`
+- `cat file > line`
+! for + $(cat)은 공백 기준으로 쪼개고 글롭 확장까지 일어납니다.
+? `for i in {1..5}` 가 반복하는 값은?
++ 1 2 3 4 5
+- 1 2 3 4
+- 0 1 2 3 4
+- 1과 5
+! 중괄호 확장은 양 끝을 포함합니다.
+
+=== 초급 | pipes-text | 파이프, 리다이렉션, 텍스트 처리
+유닉스 철학: **한 가지 일을 잘하는 작은 도구를 파이프로 연결**합니다.
+
+## 리다이렉션
+- `>` 덮어쓰기, `>>` 이어쓰기, `<` 파일을 입력으로
+- `2>` 에러 출력, `2>&1` 에러를 표준 출력으로 합치기, `&> file` 둘 다
+- `/dev/null`: 출력 버리기
+- `명령1 | 명령2`: 명령1의 출력을 명령2의 입력으로
+
+## 핵심 텍스트 도구
+- `grep 패턴`(검색, `-i` 대소문자 무시, `-v` 반전, `-c` 개수, `-E` 확장 정규식)
+- `sort`(`-n` 숫자, `-r` 역순, `-k2` 2번째 필드), `uniq -c`(연속 중복 세기 — 보통 sort 뒤에)
+- `cut -d, -f1`(필드 자르기), `tr`(문자 변환), `wc`
+- `sed 's/old/new/g'`(치환), `awk '{print $1}'`(필드 처리·계산)
+- `tee`: 화면과 파일에 동시에 출력, `xargs`: 입력을 인자로
+--- code
+#!/usr/bin/env bash
+work=$(mktemp -d)
+cat > "$work/access.log" <<'EOF'
+192.168.0.1 GET /index.html 200 512
+192.168.0.2 GET /about.html 200 1024
+192.168.0.1 POST /login 401 64
+192.168.0.3 GET /index.html 200 512
+192.168.0.1 GET /missing 404 0
+192.168.0.2 GET /index.html 200 512
+EOF
+log="$work/access.log"
+
+echo "== 전체 요청 수"; wc -l < "$log"
+echo "== 200이 아닌 요청"; grep -v " 200 " "$log"
+echo "== IP별 요청 수 (많은 순)"
+cut -d' ' -f1 "$log" | sort | uniq -c | sort -rn
+echo "== 가장 많이 요청된 경로"
+awk '{print $3}' "$log" | sort | uniq -c | sort -rn | head -n 1
+echo "== 전송 바이트 합계"
+awk '{ total += $5 } END { print total " bytes" }' "$log"
+echo "== 상태 코드별 개수"
+awk '{ count[$4]++ } END { for (c in count) print c, count[c] }' "$log" | sort
+
+sed 's/192\.168\.0\./10.0.0./g' "$log" | head -n 2
+echo "hello world" | tr 'a-z' 'A-Z'
+
+ls /없는폴더 > "$work/out.txt" 2> "$work/err.txt"
+echo "에러 내용 줄 수: $(wc -l < "$work/err.txt")"
+echo "로그 기록" | tee -a "$work/app.log" > /dev/null
+cat "$work/app.log"
+rm -rf "$work"
+--- exercise
+문장 `"the cat and the dog and the bird"` 에서 단어별 빈도를 구해 많은 순으로 출력하세요. 힌트: `tr ' ' '\n' | sort | uniq -c | sort -rn`
+--- solution
+#!/usr/bin/env bash
+echo "the cat and the dog and the bird" \
+  | tr ' ' '\n' \
+  | sort \
+  | uniq -c \
+  | sort -rn
+#   3 the
+#   2 and
+#   1 dog / cat / bird ...
+--- quiz
+? 명령의 에러 출력(stderr)을 버리는 방법은?
+- `명령 > /dev/null`
++ `명령 2> /dev/null`
+- `명령 | /dev/null`
+- `명령 < /dev/null`
+! 1은 표준 출력, 2는 표준 에러 파일 디스크립터입니다.
+? `uniq -c` 앞에 보통 `sort` 를 쓰는 이유는?
++ uniq는 연속으로 붙어 있는 중복만 합치기 때문
+- uniq는 정렬된 결과를 출력하기 때문
+- sort가 없으면 오류가 나기 때문
+- 속도 때문
+! 같은 값이 떨어져 있으면 별개로 셉니다. 그래서 sort | uniq -c 가 관용구입니다.
+
+=== 중급 | functions | 함수와 스크립트 인자
+## 스크립트 인자
+- `$0` 스크립트 이름, `$1`, `$2`... 위치 인자, `$#` 인자 개수
+- `"$@"`: 모든 인자(각각 따로 따옴표 유지) — 거의 항상 이것을 사용
+- `shift`: 인자를 하나씩 왼쪽으로 이동
+
+## 함수
+```bash
+greet() {
+  local name="$1"     # local: 함수 안에서만 유효
+  echo "안녕, $name"
+}
+greet "길동"
+```
+- 함수도 `$1`, `$@`, `$#` 로 인자를 받습니다.
+- **반환값**: `return` 은 종료 코드(0~255)만 반환합니다. 데이터는 `echo` 로 출력하고 `$(함수)` 로 받습니다.
+- `local` 을 쓰지 않으면 전역 변수가 됩니다.
+--- code
+#!/usr/bin/env bash
+greet() {
+  local name="${1:-손님}"
+  local greeting="${2:-안녕하세요}"
+  echo "$greeting, ${name}님!"
+}
+
+add() {
+  echo $(( $1 + $2 ))               # 결과는 출력으로 "반환"
+}
+
+is_even() {
+  (( $1 % 2 == 0 ))                 # 종료 코드로 참/거짓 반환
+}
+
+sum_all() {
+  local total=0
+  for n in "$@"; do (( total += n )); done
+  echo "$total"
+}
+
+show_args() {
+  echo "인자 개수: $#"
+  local i=1
+  for arg in "$@"; do
+    echo "  \$$i = '$arg'"
+    (( i++ ))
+  done
+}
+
+die() {
+  echo "오류: $*" >&2
+  return 1
+}
+
+greet "길동"
+greet
+result=$(add 7 5)
+echo "7 + 5 = $result"
+
+for n in 3 8; do
+  if is_even "$n"; then echo "$n: 짝수"; else echo "$n: 홀수"; fi
+done
+
+echo "합계: $(sum_all 10 20 30 40)"
+show_args "첫 번째" "공백 포함 인자" 3
+
+die "설정 파일 없음" 2>/dev/null || echo "die 함수가 실패 코드 $? 반환"
+
+counter=0
+increment() { (( counter++ )); }     # local 없음 → 전역 변경
+increment; increment
+echo "counter=$counter"
+--- exercise
+`max` 함수를 작성해 임의 개수의 정수 인자 중 최댓값을 출력하세요. 인자가 없으면 에러 메시지를 stderr로 출력하고 종료 코드 1을 반환합니다.
+--- solution
+#!/usr/bin/env bash
+max() {
+  if (( $# == 0 )); then
+    echo "max: 인자가 필요합니다" >&2
+    return 1
+  fi
+  local m="$1"
+  shift
+  for n in "$@"; do
+    (( n > m )) && m="$n"
+  done
+  echo "$m"
+}
+
+max 3 17 9 -2       # 17
+max -5 -1 -9        # -1
+max || echo "종료 코드: $?"
+--- quiz
+? 셸 함수에서 계산 결과(문자열·숫자)를 돌려주는 일반적인 방법은?
+- `return "결과"`
++ `echo` 로 출력하고 호출 측에서 `$(함수)` 로 받는다
+- 전역 변수만 사용할 수 있다
+- `export` 로 반환한다
+! return은 0~255의 종료 코드만 전달할 수 있습니다.
+? 모든 인자를 공백이 포함된 인자도 보존하며 전달하는 표현은?
+- `$*`
++ `"$@"`
+- `$#`
+- `$@` (따옴표 없이)
+! "$@"는 각 인자를 개별적으로 따옴표 처리한 것처럼 확장됩니다.
+
+=== 중급 | arrays-strings | 배열과 문자열 처리
+## 배열
+- 생성: `fruits=(사과 배 "청포도")`, 추가: `fruits+=(망고)`
+- 접근: `${fruits[0]}`, 전체: `"${fruits[@]}"`, 개수: `${#fruits[@]}`, 인덱스: `${!fruits[@]}`
+- 슬라이스: `"${fruits[@]:1:2}"`
+
+## 연관 배열 (Bash 4+)
+`declare -A ages=([길동]=30 [영희]=25)` → `${ages[길동]}`, 키 목록 `${!ages[@]}`
+
+## 매개변수 확장 (외부 명령 없이 문자열 처리)
+- 길이 `${#s}`, 부분 문자열 `${s:0:3}`
+- 기본값 `${x:-기본}`, 필수 `${x:?에러메시지}`
+- 앞에서 제거 `${path#*/}`(최단) `${path##*/}`(최장) → 파일명 추출
+- 뒤에서 제거 `${file%.*}` → 확장자 제거, `${file%%.*}`
+- 치환 `${s/old/new}`(첫 번째) `${s//old/new}`(전체)
+- 대소문자 `${s^^}`(대문자) `${s,,}`(소문자)
+--- code
+#!/usr/bin/env bash
+fruits=(사과 바나나 "청 포도")
+fruits+=(망고)
+echo "개수: ${#fruits[@]}"
+echo "첫 번째: ${fruits[0]}, 마지막: ${fruits[-1]}"
+for i in "${!fruits[@]}"; do
+  echo "$i: ${fruits[$i]}"
+done
+echo "슬라이스: ${fruits[*]:1:2}"
+
+declare -A stock=([사과]=10 [배]=3)
+stock[포도]=7
+(( stock[배] += 5 ))
+for key in $(printf "%s\n" "${!stock[@]}" | sort); do
+  echo "$key: ${stock[$key]}"
+done
+
+path="/home/gildong/projects/report.final.pdf"
+echo "파일명: ${path##*/}"           # report.final.pdf
+echo "디렉터리: ${path%/*}"          # /home/gildong/projects
+file="${path##*/}"
+echo "확장자 제거: ${file%.*}"       # report.final
+echo "확장자: ${file##*.}"           # pdf
+
+s="Hello Bash World"
+echo "길이: ${#s}"
+echo "부분: ${s:6:4}"                # Bash
+echo "치환: ${s/World/셸}"
+echo "대문자: ${s^^}, 소문자: ${s,,}"
+
+csv="a,b,c,d"
+IFS=, read -r -a parts <<< "$csv"
+echo "분리된 개수: ${#parts[@]}, 두 번째: ${parts[1]}"
+joined=$(IFS=-; echo "${parts[*]}")
+echo "합치기: $joined"               # a-b-c-d
+
+mapfile -t lines < <(printf "줄1\n줄2\n줄3\n")
+echo "읽은 줄 수: ${#lines[@]}"
+--- exercise
+파일 이름 배열 `files=("photo.JPG" "notes.txt" "backup.tar.gz" "README")` 에 대해 각 파일의 "이름(확장자 제외)"과 "소문자 확장자"를 출력하세요. 확장자가 없으면 "(없음)"으로 표시합니다. 매개변수 확장만 사용하세요.
+--- solution
+#!/usr/bin/env bash
+files=("photo.JPG" "notes.txt" "backup.tar.gz" "README")
+for f in "${files[@]}"; do
+  if [[ "$f" == *.* ]]; then
+    name="${f%.*}"
+    ext="${f##*.}"
+    ext="${ext,,}"
+  else
+    name="$f"
+    ext="(없음)"
+  fi
+  echo "$f → 이름: $name, 확장자: $ext"
+done
+# backup.tar.gz → 이름: backup.tar, 확장자: gz
+--- quiz
+? `file="archive.tar.gz"` 일 때 `${file%%.*}` 의 결과는?
+- archive.tar
++ archive
+- gz
+- tar.gz
+! %%는 뒤에서부터 가장 긴 일치(.tar.gz)를 제거합니다. %는 가장 짧은 일치(.gz)를 제거합니다.
+? 배열의 모든 원소를 공백 포함 원소도 보존하며 순회하려면?
++ `for x in "${arr[@]}"`
+- `for x in $arr`
+- `for x in ${arr}`
+- `for x in "${arr}"`
+! $arr만 쓰면 첫 번째 원소만 가리킵니다.
+
+=== 고급 | robust-scripts | 견고한 스크립트: 엄격 모드, trap, getopts
+실무 스크립트(배포, 백업, CI)는 **실패를 조용히 넘기지 않도록** 작성해야 합니다.
+
+## 엄격 모드
+`set -euo pipefail`
+- `-e`: 명령이 실패하면 즉시 종료
+- `-u`: 정의되지 않은 변수 사용 시 오류
+- `-o pipefail`: 파이프 중간 명령의 실패도 감지
+
+## trap
+신호나 종료 시점에 정리 코드를 실행합니다: `trap 'rm -rf "$tmp"' EXIT`. 스크립트가 어떻게 끝나든 임시 파일이 지워집니다. `ERR` 트랩으로 실패 위치를 로그로 남길 수 있습니다.
+
+## getopts
+`-v`, `-o 파일` 같은 옵션을 파싱합니다.
+
+## 기타 모범 사례
+- **ShellCheck**(`shellcheck script.sh`)로 정적 분석 — 강력 추천
+- 함수 단위 구성 + `main "$@"` 패턴
+- 로그는 stderr로, 의미 있는 종료 코드 사용
+- 복잡해지면(수백 줄 이상, 자료 구조 필요) Python 등으로 전환을 고려
+--- code
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly SCRIPT_NAME="${0##*/}"
+VERBOSE=0
+OUTPUT="report.txt"
+
+log()  { echo "[$(date +%H:%M:%S)] $*" >&2; }
+vlog() { (( VERBOSE )) && log "$@" || true; }
+
+usage() {
+  cat <<EOF
+사용법: $SCRIPT_NAME [-v] [-o 출력파일] 이름...
+  -v        자세한 로그
+  -o FILE   출력 파일 (기본: report.txt)
+  -h        도움말
+EOF
+}
+
+parse_args() {
+  local OPTIND opt
+  while getopts ":vo:h" opt; do
+    case "$opt" in
+      v) VERBOSE=1 ;;
+      o) OUTPUT="$OPTARG" ;;
+      h) usage; exit 0 ;;
+      :) log "옵션 -$OPTARG 에 값이 필요합니다"; exit 2 ;;
+      \?) log "알 수 없는 옵션: -$OPTARG"; usage; exit 2 ;;
+    esac
+  done
+  shift $(( OPTIND - 1 ))
+  NAMES=("$@")
+}
+
+main() {
+  parse_args "$@"
+  (( ${#NAMES[@]} > 0 )) || { log "이름을 하나 이상 주세요"; exit 2; }
+
+  # trap은 함수가 끝난 뒤(스크립트 종료 시) 실행되므로 local 변수를 쓰면
+  # set -u 에서 "unbound variable" 오류가 납니다 → 전역 변수 사용
+  TMP_DIR=$(mktemp -d)
+  trap 'rm -rf "$TMP_DIR"; vlog "임시 디렉터리 정리 완료"' EXIT
+  local tmp="$TMP_DIR"
+
+  vlog "작업 디렉터리: $tmp"
+  for name in "${NAMES[@]}"; do
+    echo "보고서 대상: $name" >> "$tmp/$OUTPUT"
+  done
+  log "총 $(wc -l < "$tmp/$OUTPUT")명 처리"
+  cat "$tmp/$OUTPUT"
+
+  if false | true; then              # pipefail: 파이프 중간 명령의 실패도 감지
+    echo "(이 줄은 pipefail이 꺼져 있을 때만 출력)"
+  else
+    echo "pipefail이 파이프 중간 실패를 감지함"
+  fi
+}
+
+# 데모용 인자로 실행. 실제로는: main "$@"
+main -v -o names.txt 길동 영희 철수
+--- exercise
+`set -euo pipefail` 과 `trap ... EXIT` 를 사용하는 백업 스크립트를 작성하세요. 임시 디렉터리에 `data/` 폴더와 파일 3개를 만들고, `tar -czf` 로 `backup-YYYYMMDD.tar.gz` 를 만든 뒤 아카이브 안의 파일 목록(`tar -tzf`)을 출력합니다. 스크립트가 끝나면 임시 디렉터리가 반드시 삭제되어야 합니다.
+--- solution
+#!/usr/bin/env bash
+set -euo pipefail
+
+work=$(mktemp -d)
+trap 'rm -rf "$work"; echo "정리 완료" >&2' EXIT
+
+mkdir -p "$work/data"
+for i in 1 2 3; do
+  echo "내용 $i" > "$work/data/file$i.txt"
+done
+
+archive="$work/backup-$(date +%Y%m%d).tar.gz"
+tar -czf "$archive" -C "$work" data
+echo "생성: ${archive##*/} ($(du -h "$archive" | cut -f1))"
+tar -tzf "$archive" | sort
+--- quiz
+? `set -e` 의 효과는?
++ 명령이 실패(0이 아닌 종료 코드)하면 스크립트를 즉시 종료
+- 모든 명령을 화면에 출력
+- 정의되지 않은 변수를 빈 문자열로 처리
+- 에러 메시지를 숨김
+! set -x가 명령을 출력하는 디버그 옵션이고, -u가 미정의 변수를 오류로 만듭니다.
+? 스크립트 종료 시 임시 파일을 확실히 지우는 방법은?
+- 스크립트 마지막 줄에 rm 추가
++ `trap 'rm -rf "$tmp"' EXIT`
+- cron으로 매일 삭제
+- /tmp는 자동 삭제되므로 필요 없음
+! 마지막 줄의 rm은 중간에 오류로 종료되면 실행되지 않습니다.

@@ -1,0 +1,999 @@
+@id rust
+@name Rust
+@badge Rs
+@color #ce422b
+@difficulty 5
+@category 시스템
+@year 2015
+@uses 시스템 프로그래밍 · 웹어셈블리 · CLI 도구 · 블록체인 · 고성능 백엔드
+@desc 가비지 컬렉터 없이도 메모리 안전성을 컴파일 시점에 보장하는 언어입니다. C/C++ 수준의 성능에 현대적인 도구를 갖춰 "가장 사랑받는 언어" 조사에서 수년째 1위를 지켰습니다.
+
+=== 입문 | hello | Rust 시작하기: Cargo와 Hello World
+Rust는 모질라에서 시작된 시스템 프로그래밍 언어로, **"빠르고, 안전하고, 동시성에 강한"** 소프트웨어를 목표로 합니다. 리눅스 커널, 윈도우, 안드로이드, 클라우드플레어 등에서 C/C++을 대체하며 쓰이고 있습니다.
+
+## 설치와 Cargo
+- rustup.rs 의 설치 스크립트로 `rustup` 설치 → `rustc --version`
+- **Cargo**: 빌드 도구 + 패키지 관리자
+  - `cargo new hello` 프로젝트 생성
+  - `cargo run` 빌드 후 실행, `cargo build --release` 최적화 빌드
+  - `cargo check` 빠른 컴파일 검사, `cargo test`, `cargo fmt`, `cargo clippy`(린트)
+- 외부 라이브러리(crate)는 `Cargo.toml` 의 `[dependencies]` 에 추가 (crates.io)
+
+`println!` 끝의 `!` 는 함수가 아니라 **매크로**라는 표시입니다. `{}` 자리에 값이 들어가고, `{:?}` 는 디버그 출력입니다.
+--- code
+fn main() {
+    println!("Hello, World!");
+    let name = "길동";
+    let year = 2015;
+    println!("{}님, Rust 1.0은 {}년에 출시되었습니다.", name, year);
+    println!("{name}님 안녕하세요!");          // 변수 이름을 직접 넣기 (2021 에디션)
+    println!("{:.2} / {:>5}| / {:?}", 3.14159, 42, vec![1, 2, 3]);
+    eprintln!("에러 출력은 표준 에러로");
+}
+--- exercise
+`println!` 의 서식 기능을 이용해 이름, 나이, 그리고 `{:08.3}` 형식으로 원주율을 출력하고, 튜플 `(1, "two", 3.0)` 을 `{:?}` 로 출력해 보세요.
+--- solution
+fn main() {
+    let name = "홍길동";
+    let age = 30;
+    println!("이름: {name}, 나이: {age}");
+    println!("{:08.3}", std::f64::consts::PI); // 0003.142
+    println!("{:?}", (1, "two", 3.0));          // (1, "two", 3.0)
+}
+--- quiz
+? `println!` 의 `!` 가 의미하는 것은?
+- 강조 출력
++ 함수가 아닌 매크로 호출
+- 에러 발생 시 종료
+- 비동기 실행
+! Rust 매크로는 컴파일 시점에 코드로 확장됩니다.
+? Rust 프로젝트를 만들고 빌드·실행·의존성 관리를 하는 공식 도구는?
+- npm
+- pip
++ Cargo
+- Maven
+! cargo new, cargo run, cargo add 등으로 관리합니다.
+
+=== 입문 | variables | 변수, 불변성, 자료형
+## 변수는 기본적으로 불변
+`let x = 5;` 로 만든 변수는 바꿀 수 없습니다. 바꾸려면 `let mut x = 5;` 처럼 **명시적으로 `mut`** 를 붙입니다. 이 설계 덕분에 의도치 않은 변경 버그가 줄어듭니다.
+
+## 섀도잉
+같은 이름으로 `let` 을 다시 쓰면 새 변수가 이전 변수를 가립니다. 타입도 바꿀 수 있습니다: `let spaces = "   "; let spaces = spaces.len();`
+
+## 스칼라 타입
+- 정수: `i8`~`i128`, `u8`~`u128`, `isize`/`usize`(포인터 크기, 인덱스용). 기본은 `i32`
+- 실수: `f64`(기본), `f32`
+- `bool`, `char`(4바이트 유니코드 스칼라 — 한글 한 글자도 char 하나)
+
+## 복합 타입
+- 튜플 `(i32, f64, char)` — `t.0` 으로 접근, 구조 분해 가능
+- 배열 `[i32; 5]` — 고정 길이. 범위를 벗어난 접근은 **패닉**(C처럼 조용히 메모리를 침범하지 않음)
+
+> 디버그 빌드에서 정수 오버플로는 패닉이 발생합니다. 의도적인 래핑은 `wrapping_add`, 검사는 `checked_add` 를 사용하세요.
+--- code
+fn main() {
+    let x = 5;
+    // x = 6;                 // ❌ 컴파일 오류: 불변 변수에 재할당
+    let mut count = 0;
+    count += 1;
+
+    let spaces = "   ";
+    let spaces = spaces.len(); // 섀도잉: &str → usize
+    println!("x={x} count={count} spaces={spaces}");
+
+    let big: u64 = 10_000_000_000;
+    let pi = 3.14_f32;
+    let ch = '한';
+    let ok: bool = true;
+    println!("{big} {pi} {ch} {ok} char크기={}바이트", std::mem::size_of::<char>());
+
+    let tup: (i32, f64, &str) = (500, 6.4, "rust");
+    let (a, b, c) = tup;
+    println!("{a} {b} {c} / {}", tup.0);
+
+    let arr = [10, 20, 30, 40, 50];
+    let zeros = [0u8; 4];          // [0, 0, 0, 0]
+    println!("{:?} 길이={} {:?}", arr, arr.len(), zeros);
+
+    let max = u8::MAX;             // 255
+    println!("{:?} {:?} {}", max.checked_add(1), 200u8.checked_add(50), max.wrapping_add(1));
+    // None Some(250) 0
+
+    let n = 7 / 2;                 // 3 (정수 나눗셈)
+    let f = 7.0 / 2.0;             // 3.5
+    let cast = 3.99_f64 as i32;    // 3 (as로 명시적 변환)
+    println!("{n} {f} {cast}");
+}
+--- exercise
+`let mut total: u32 = 0;` 을 선언하고 1부터 100까지 더한 값을 출력하세요. 그다음 섀도잉을 이용해 `total` 을 `f64` 로 바꾸고 100으로 나눈 평균을 출력하세요.
+--- solution
+fn main() {
+    let mut total: u32 = 0;
+    for i in 1..=100 {
+        total += i;
+    }
+    println!("{total}");              // 5050
+    let total = total as f64 / 100.0; // 섀도잉으로 타입 변경
+    println!("{total}");              // 50.5
+}
+--- quiz
+? `let x = 5; x = 10;` 을 컴파일하면?
+- x가 10이 된다
++ 불변 변수에 재할당하므로 컴파일 오류
+- 경고만 출력된다
+- 런타임 패닉
+! 변경하려면 let mut x = 5; 로 선언해야 합니다.
+? Rust의 `char` 타입에 대한 설명으로 옳은 것은?
+- 1바이트 ASCII 문자
++ 4바이트 유니코드 스칼라 값으로, 한글 한 글자도 담을 수 있다
+- 문자열과 같은 타입
+- 2바이트 UTF-16 코드 단위
+! 반면 String/&str은 UTF-8 바이트 시퀀스입니다.
+
+=== 입문 | control | 함수와 제어 흐름
+## 함수
+`fn add(a: i32, b: i32) -> i32 { a + b }` — 매개변수 타입은 필수입니다. 함수 본문의 **마지막 식**(세미콜론 없음)이 반환값이 됩니다. 세미콜론을 붙이면 문(statement)이 되어 `()` 를 반환합니다. 조기 반환은 `return`.
+
+## if는 식(expression)
+`let grade = if score >= 90 { "A" } else { "B" };` 처럼 값을 만들 수 있습니다. 조건은 반드시 `bool` 이어야 합니다(정수 자동 변환 없음).
+
+## 반복문
+- `loop { }` — 무한 루프. `break 값;` 으로 값을 반환할 수 있음
+- `while 조건 { }`
+- `for x in 반복자 { }` — 범위 `1..10`(10 미포함), `1..=10`(포함), `.rev()` 역순
+- 라벨: `'outer: loop { break 'outer; }`
+
+## match
+값을 패턴과 비교하는 강력한 분기입니다. **모든 경우를 처리해야** 컴파일됩니다(완전성 검사).
+--- code
+fn add(a: i32, b: i32) -> i32 {
+    a + b // 세미콜론 없음 → 반환값
+}
+
+fn classify(n: i32) -> &'static str {
+    match n {
+        i32::MIN..=-1 => "음수",
+        0 => "영",
+        1..=9 => "한 자리 양수",
+        _ => "큰 양수",
+    }
+}
+
+fn main() {
+    println!("{}", add(2, 3));
+
+    let score = 85;
+    let grade = if score >= 90 { "A" } else if score >= 80 { "B" } else { "C" };
+    println!("{grade}");
+
+    let mut counter = 0;
+    let result = loop {
+        counter += 1;
+        if counter == 10 {
+            break counter * 2; // loop가 값을 반환
+        }
+    };
+    println!("result = {result}");
+
+    for i in (1..=3).rev() {
+        print!("{i}... ");
+    }
+    println!("발사!");
+
+    for n in [-5, 0, 7, 42] {
+        println!("{n}: {}", classify(n));
+    }
+
+    let pair = (0, -2);
+    match pair {
+        (0, y) => println!("y축 위의 점, y={y}"),
+        (x, 0) => println!("x축 위의 점, x={x}"),
+        _ => println!("어느 축에도 없음"),
+    }
+}
+--- exercise
+정수 n을 받아 n번째 피보나치 수를 반환하는 `fn fib(n: u32) -> u64` 를 반복문으로 작성하고, `match` 를 사용해 1~3월은 "1분기", 4~6월은 "2분기" ... 를 반환하는 `fn quarter(month: u32) -> &'static str` 도 작성하세요(범위 밖은 "잘못된 월").
+--- solution
+fn fib(n: u32) -> u64 {
+    let (mut a, mut b) = (0u64, 1u64);
+    for _ in 0..n {
+        (a, b) = (b, a + b);
+    }
+    a
+}
+
+fn quarter(month: u32) -> &'static str {
+    match month {
+        1..=3 => "1분기",
+        4..=6 => "2분기",
+        7..=9 => "3분기",
+        10..=12 => "4분기",
+        _ => "잘못된 월",
+    }
+}
+
+fn main() {
+    println!("{} {}", fib(10), fib(50)); // 55 12586269025
+    println!("{} {}", quarter(5), quarter(13));
+}
+--- quiz
+? `fn f() -> i32 { 5; }` 가 컴파일 오류인 이유는?
++ 세미콜론 때문에 마지막이 식이 아닌 문이 되어 `()` 를 반환하기 때문
+- return 키워드가 없어서
+- 5가 i64라서
+- 함수 이름이 너무 짧아서
+! 세미콜론을 빼면 5가 반환값이 됩니다.
+? `match` 에서 일부 경우를 처리하지 않으면?
+- 처리하지 않은 경우는 무시된다
++ 컴파일 오류가 발생한다
+- 런타임에 패닉이 발생한다
+- 경고만 출력된다
+! 모든 가능성을 처리해야 하며, 나머지는 _ 패턴으로 묶을 수 있습니다.
+
+=== 초급 | ownership | 소유권: Rust의 핵심
+**소유권(ownership)** 은 가비지 컬렉터 없이 메모리 안전성을 보장하는 Rust만의 시스템입니다.
+
+## 소유권 규칙 3가지
+1. 모든 값에는 **소유자**인 변수가 하나 있다.
+2. 한 번에 **소유자는 하나**뿐이다.
+3. 소유자가 스코프를 벗어나면 값은 **자동으로 해제(drop)** 된다.
+
+## 이동(move)
+힙 데이터를 가진 `String` 을 다른 변수에 대입하거나 함수에 넘기면 소유권이 **이동**하고, 원래 변수는 더 이상 쓸 수 없습니다. 덕분에 이중 해제가 원천 차단됩니다.
+
+## 복사(Copy)
+정수, 실수, bool, char 같은 스택 전용 타입은 `Copy` 트레이트를 가져 대입 시 값이 복사되고 원본도 계속 쓸 수 있습니다.
+
+## clone
+힙 데이터까지 깊은 복사가 필요하면 `.clone()` 을 명시적으로 호출합니다. 비용이 드는 연산이 코드에 드러나게 하는 설계입니다.
+--- code
+fn take_ownership(s: String) {
+    println!("받은 값: {s}");
+} // 여기서 s가 drop됨
+
+fn make_greeting(name: &str) -> String {
+    format!("안녕하세요, {name}님") // 소유권을 호출자에게 반환
+}
+
+fn main() {
+    let s1 = String::from("hello");
+    let s2 = s1; // 소유권 이동: s1은 무효
+    // println!("{s1}");   // ❌ 컴파일 오류: borrow of moved value: `s1`
+    println!("{s2}");
+
+    let s3 = s2.clone(); // 깊은 복사: 둘 다 유효
+    println!("{s2} {s3}");
+
+    take_ownership(s3);
+    // println!("{s3}");   // ❌ s3는 함수로 이동됨
+
+    let x = 5;
+    let y = x; // i32는 Copy: x도 계속 사용 가능
+    println!("{x} {y}");
+
+    let g = make_greeting("길동");
+    println!("{g}");
+
+    {
+        let temp = String::from("임시");
+        println!("{temp}");
+    } // temp가 여기서 자동 해제 (free 호출 불필요)
+}
+--- exercise
+다음 코드가 왜 컴파일되지 않는지 설명하고, (1) `clone` 을 사용하는 방법과 (2) 함수가 문자열 길이와 함께 소유권을 돌려주는 방법 두 가지로 고쳐 보세요.
+
+```
+fn length(s: String) -> usize { s.len() }
+fn main() {
+    let text = String::from("소유권");
+    let n = length(text);
+    println!("{text}의 길이는 {n}");
+}
+```
+--- solution
+// 원인: text의 소유권이 length 함수로 이동되어 이후 text를 사용할 수 없음
+
+// 방법 1: clone으로 복사본을 넘김 (비용 발생)
+fn length(s: String) -> usize { s.len() }
+
+// 방법 2: 소유권을 튜플로 돌려받음 (번거로움 → 다음 레슨의 "빌림"이 정답!)
+fn length_and_back(s: String) -> (String, usize) {
+    let n = s.len();
+    (s, n)
+}
+
+fn main() {
+    let text = String::from("소유권");
+    let n = length(text.clone());
+    println!("{text}의 길이는 {n}");          // 9 (UTF-8 바이트)
+
+    let (text, n) = length_and_back(text);
+    println!("{text}의 길이는 {n}");
+}
+--- quiz
+? `let a = String::from("x"); let b = a;` 이후 `a` 를 사용하면?
+- a와 b가 같은 문자열을 공유한다
++ 소유권이 b로 이동했으므로 컴파일 오류
+- a는 빈 문자열이 된다
+- 런타임 패닉
+! String은 Copy가 아니므로 대입 시 이동합니다.
+? 다음 중 대입 시 **복사**되는(Copy) 타입은?
+- `String`
+- `Vec<i32>`
++ `i32`
+- `Box<i32>`
+! 힙 자원을 소유하는 타입은 Copy가 될 수 없습니다.
+
+=== 초급 | borrowing | 참조와 빌림, 슬라이스
+소유권을 넘기지 않고 값을 사용하려면 **참조(&)** 로 **빌려(borrow)** 줍니다.
+
+## 빌림 규칙 (컴파일러의 빌림 검사기가 강제)
+- **불변 참조 `&T`** 는 동시에 여러 개 가능
+- **가변 참조 `&mut T`** 는 한 번에 **딱 하나**, 그리고 그동안 불변 참조도 없어야 함
+- 참조는 항상 **유효한 값**을 가리켜야 함 (댕글링 참조 불가)
+
+이 규칙이 **데이터 경쟁을 컴파일 시점에 차단**합니다. "읽는 사람이 여럿이거나, 쓰는 사람이 하나이거나."
+
+## 슬라이스
+컬렉션의 일부를 가리키는 참조입니다.
+- 문자열 슬라이스 `&str`: `&s[0..5]`. 문자열 리터럴도 `&str`
+- 배열 슬라이스 `&[i32]`
+- 함수 매개변수는 `&String` 보다 `&str`, `&Vec<T>` 보다 `&[T]` 를 받는 것이 더 범용적입니다.
+--- code
+fn length(s: &str) -> usize {
+    s.len() // 빌렸을 뿐, 소유권은 그대로
+}
+
+fn add_exclamation(s: &mut String) {
+    s.push_str("!");
+}
+
+fn first_word(s: &str) -> &str {
+    s.split_whitespace().next().unwrap_or("")
+}
+
+fn sum(nums: &[i32]) -> i32 {
+    nums.iter().sum()
+}
+
+fn main() {
+    let mut text = String::from("hello world");
+    println!("길이: {}", length(&text));
+    println!("원본 여전히 사용 가능: {text}");
+
+    add_exclamation(&mut text);
+    println!("{text}");                       // hello world!
+
+    let r1 = &text;
+    let r2 = &text;                           // 불변 참조 여러 개 OK
+    println!("{r1} / {r2}");
+    // let r3 = &mut text;                    // r1, r2가 아래에서 쓰인다면 ❌
+
+    let r3 = &mut text;                       // r1, r2를 더 이상 쓰지 않으므로 OK (NLL)
+    r3.make_ascii_uppercase();
+    println!("{text}");
+
+    let word = first_word(&text);
+    println!("첫 단어: {word}");
+
+    let arr = [1, 2, 3, 4, 5];
+    println!("{} {}", sum(&arr), sum(&arr[1..4])); // 15 9
+    let v = vec![10, 20];
+    println!("{}", sum(&v));                  // Vec도 &[i32]로 전달 가능
+}
+--- exercise
+문자열 슬라이스를 받아 가장 긴 단어를 반환하는 `fn longest_word(s: &str) -> &str` 를 작성하고, 정수 슬라이스의 모든 원소를 두 배로 만드는 `fn double_all(v: &mut [i32])` 를 작성하세요.
+--- solution
+fn longest_word(s: &str) -> &str {
+    let mut best = "";
+    for w in s.split_whitespace() {
+        if w.len() > best.len() {
+            best = w;
+        }
+    }
+    best
+}
+
+fn double_all(v: &mut [i32]) {
+    for x in v.iter_mut() {
+        *x *= 2;
+    }
+}
+
+fn main() {
+    println!("{}", longest_word("rust makes systems programming fun")); // programming
+    let mut nums = vec![1, 2, 3];
+    double_all(&mut nums);
+    println!("{:?}", nums); // [2, 4, 6]
+}
+--- quiz
+? 같은 값에 대해 동시에 허용되는 참조 조합은?
++ 불변 참조 여러 개
+- 가변 참조 두 개
+- 가변 참조 하나와 불변 참조 하나
+- 제한 없음
+! 가변 참조는 단 하나만, 그리고 그동안 다른 참조가 없어야 합니다.
+? 함수 매개변수로 `&String` 대신 `&str` 을 권장하는 이유는?
+- &str이 더 빠르게 복사되어서
++ String의 참조와 문자열 리터럴, 부분 슬라이스를 모두 받을 수 있어 더 범용적이라서
+- String은 함수에 전달할 수 없어서
+- &str은 가변이라서
+! &String은 자동으로 &str로 역참조 변환(deref coercion)됩니다.
+
+=== 초급 | structs-enums | 구조체, 열거형, Option
+## 구조체와 impl
+`struct` 로 데이터를 정의하고 `impl` 블록에 메서드를 작성합니다.
+- `&self`(읽기), `&mut self`(수정), `self`(소유권 가져감)
+- `Self` 를 반환하는 연관 함수 `fn new(...) -> Self` 가 생성자 관례
+- `#[derive(Debug, Clone, PartialEq)]` 로 기능 자동 구현
+
+## 열거형(enum)
+Rust의 enum은 각 변형(variant)이 **데이터를 가질 수 있는** 강력한 타입입니다(대수적 데이터 타입). `match` 와 함께 쓰면 모든 경우를 빠짐없이 처리하게 됩니다.
+
+## Option<T> — null이 없는 언어
+Rust에는 null이 없습니다. 값이 없을 수 있으면 `Option<T>` (`Some(값)` 또는 `None`)를 씁니다. 값을 꺼내려면 반드시 None의 경우를 처리해야 하므로 **null 포인터 오류가 원천적으로 사라집니다**.
+- `if let Some(x) = opt { }`, `match`, `unwrap_or(기본값)`, `map`, `?`
+--- code
+#[derive(Debug, Clone, PartialEq)]
+struct Rect {
+    width: f64,
+    height: f64,
+}
+
+impl Rect {
+    fn new(width: f64, height: f64) -> Self {
+        Self { width, height }
+    }
+    fn square(size: f64) -> Self {
+        Self::new(size, size)
+    }
+    fn area(&self) -> f64 {
+        self.width * self.height
+    }
+    fn scale(&mut self, k: f64) {
+        self.width *= k;
+        self.height *= k;
+    }
+}
+
+#[derive(Debug)]
+enum Shape {
+    Circle { radius: f64 },
+    Rectangle(Rect),
+    Point,
+}
+
+impl Shape {
+    fn area(&self) -> f64 {
+        match self {
+            Shape::Circle { radius } => std::f64::consts::PI * radius * radius,
+            Shape::Rectangle(r) => r.area(),
+            Shape::Point => 0.0,
+        }
+    }
+}
+
+fn find_index(items: &[&str], target: &str) -> Option<usize> {
+    items.iter().position(|&x| x == target)
+}
+
+fn main() {
+    let mut r = Rect::new(3.0, 4.0);
+    r.scale(2.0);
+    println!("{:?} 넓이={}", r, r.area());
+    println!("{}", Rect::square(2.0) == Rect::new(2.0, 2.0)); // true
+
+    let shapes = vec![Shape::Circle { radius: 1.0 }, Shape::Rectangle(r.clone()), Shape::Point];
+    for s in &shapes {
+        println!("{:?} → {:.2}", s, s.area());
+    }
+
+    let fruits = ["사과", "배", "포도"];
+    match find_index(&fruits, "배") {
+        Some(i) => println!("배는 {i}번째"),
+        None => println!("없음"),
+    }
+    if let Some(i) = find_index(&fruits, "수박") {
+        println!("{i}");
+    } else {
+        println!("수박 없음");
+    }
+    println!("{}", find_index(&fruits, "키위").map(|i| i + 1).unwrap_or(0));
+}
+--- exercise
+신호등을 나타내는 `enum Light { Red, Yellow, Green }` 을 만들고, 각 신호의 대기 시간(초)을 반환하는 메서드 `fn duration(&self) -> u32` 와 다음 신호를 반환하는 `fn next(&self) -> Light` 를 `impl` 블록에 작성하세요.
+--- solution
+#[derive(Debug)]
+enum Light {
+    Red,
+    Yellow,
+    Green,
+}
+
+impl Light {
+    fn duration(&self) -> u32 {
+        match self {
+            Light::Red => 60,
+            Light::Yellow => 3,
+            Light::Green => 45,
+        }
+    }
+    fn next(&self) -> Light {
+        match self {
+            Light::Red => Light::Green,
+            Light::Green => Light::Yellow,
+            Light::Yellow => Light::Red,
+        }
+    }
+}
+
+fn main() {
+    let mut light = Light::Red;
+    for _ in 0..4 {
+        println!("{:?}: {}초", light, light.duration());
+        light = light.next();
+    }
+}
+--- quiz
+? Rust에서 "값이 없을 수 있음"을 표현하는 표준 방법은?
+- null
+- nil
++ `Option<T>`
+- `undefined`
+! Rust에는 null이 없으며 Option의 None으로 표현합니다.
+? 메서드 매개변수 `&mut self` 의 의미는?
+- 객체의 소유권을 가져간다
++ 객체를 가변으로 빌려 필드를 수정할 수 있다
+- 객체를 복사한다
+- 정적 메서드이다
+! &self는 읽기 전용 빌림, self는 소유권을 가져갑니다.
+
+=== 중급 | errors-collections | 에러 처리(Result)와 컬렉션
+## Result<T, E>
+실패할 수 있는 연산은 `Result` 를 반환합니다: `Ok(값)` 또는 `Err(에러)`.
+- `match` 로 처리, 또는 **`?` 연산자**로 에러를 호출자에게 즉시 전파
+- `unwrap()` / `expect("메시지")` 는 에러 시 패닉 — 예제나 확실한 경우에만
+- 복구 불가능한 버그는 `panic!`
+- 실무에서는 `thiserror`(라이브러리), `anyhow`(애플리케이션) 크레이트를 많이 씁니다.
+
+## 주요 컬렉션
+- `Vec<T>`: 가변 길이 배열 — `push`, `pop`, `get(i)`(Option 반환), `iter`
+- `String`: UTF-8 문자열 — `push_str`, `format!`, `chars()`
+- `HashMap<K, V>`: `insert`, `get`, **`entry().or_insert()`** 관용구
+- `HashSet<T>`, `BTreeMap<K, V>`(정렬), `VecDeque<T>`
+--- code
+use std::collections::HashMap;
+use std::fmt;
+use std::num::ParseIntError;
+
+#[derive(Debug)]
+enum AppError {
+    Parse(ParseIntError),
+    Negative(i64),
+}
+
+impl fmt::Display for AppError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            AppError::Parse(e) => write!(f, "숫자 변환 실패: {e}"),
+            AppError::Negative(n) => write!(f, "음수는 안 됨: {n}"),
+        }
+    }
+}
+
+impl From<ParseIntError> for AppError {
+    fn from(e: ParseIntError) -> Self {
+        AppError::Parse(e)
+    }
+}
+
+fn parse_positive(s: &str) -> Result<i64, AppError> {
+    let n: i64 = s.trim().parse()?; // 실패 시 From으로 변환되어 즉시 반환
+    if n < 0 {
+        return Err(AppError::Negative(n));
+    }
+    Ok(n)
+}
+
+fn main() {
+    for input in ["42", "-7", "abc"] {
+        match parse_positive(input) {
+            Ok(n) => println!("성공: {n}"),
+            Err(e) => println!("에러: {e}"),
+        }
+    }
+
+    let mut v: Vec<i32> = Vec::new();
+    v.extend([3, 1, 4, 1, 5]);
+    v.push(9);
+    v.sort();
+    v.dedup();
+    println!("{:?} 세번째={:?} 백번째={:?}", v, v.get(2), v.get(100));
+
+    let text = "the quick brown fox jumps over the lazy dog the end";
+    let mut freq: HashMap<&str, usize> = HashMap::new();
+    for word in text.split_whitespace() {
+        *freq.entry(word).or_insert(0) += 1;
+    }
+    let mut pairs: Vec<_> = freq.into_iter().collect();
+    pairs.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
+    println!("{:?}", &pairs[..3]); // [("the", 3), ("brown", 1), ("dog", 1)]
+}
+--- exercise
+`"10,20,x,30"` 같은 쉼표 구분 문자열을 받아 모든 숫자의 합을 반환하는 `fn sum_csv(s: &str) -> Result<i32, std::num::ParseIntError>` 를 `?` 연산자로 작성하세요. 하나라도 변환에 실패하면 에러를 반환합니다.
+--- solution
+use std::num::ParseIntError;
+
+fn sum_csv(s: &str) -> Result<i32, ParseIntError> {
+    let mut total = 0;
+    for part in s.split(',') {
+        total += part.trim().parse::<i32>()?;
+    }
+    Ok(total)
+}
+
+// 반복자를 이용한 한 줄 버전:
+// s.split(',').map(|p| p.trim().parse::<i32>()).sum()
+
+fn main() {
+    println!("{:?}", sum_csv("10, 20, 30"));  // Ok(60)
+    println!("{:?}", sum_csv("10,20,x,30"));  // Err(ParseIntError { kind: InvalidDigit })
+}
+--- quiz
+? `?` 연산자의 동작은?
++ Ok면 값을 꺼내고, Err면 현재 함수에서 즉시 그 에러를 반환한다
+- 에러를 무시하고 기본값을 사용한다
+- 항상 패닉을 일으킨다
+- 값을 Option으로 바꾼다
+! ? 는 Result(또는 Option)를 반환하는 함수 안에서만 사용할 수 있습니다.
+? HashMap에서 키가 없으면 기본값을 넣고 값을 수정하는 관용구는?
+- `map.get_or_default(k)`
++ `*map.entry(k).or_insert(0) += 1`
+- `map[k] += 1`
+- `map.update(k)`
+! entry API는 조회와 삽입을 한 번에 효율적으로 처리합니다.
+
+=== 중급 | traits-generics | 트레이트와 제네릭, 반복자
+## 트레이트(trait)
+타입이 가져야 할 **공통 동작**을 정의합니다(다른 언어의 인터페이스와 비슷). 기본 구현을 제공할 수도 있습니다. `Display`, `Debug`, `Clone`, `Iterator`, `From` 등 표준 트레이트를 구현하면 언어 기능과 자연스럽게 연동됩니다.
+
+## 제네릭과 트레이트 경계
+`fn largest<T: PartialOrd + Copy>(list: &[T]) -> T` 또는 `where` 절. 컴파일 시 타입별로 코드가 생성되어(단형화) **런타임 비용이 없습니다**.
+- `impl Trait` 인자/반환: `fn print(x: impl Display)`
+- 동적 디스패치: `Box<dyn Trait>` — 서로 다른 타입을 한 컬렉션에
+
+## 반복자와 클로저
+`iter()` → `map`, `filter`, `enumerate`, `zip`, `take`, `sum`, `collect` 체인. 반복자는 **지연 평가**되며, 최적화 후 손으로 짠 루프만큼 빠릅니다(제로 비용 추상화). 클로저 `|x| x * 2` 는 주변 변수를 캡처합니다.
+--- code
+use std::fmt;
+
+trait Describe {
+    fn name(&self) -> String;
+    fn describe(&self) -> String {
+        format!("이것은 {}입니다", self.name()) // 기본 구현
+    }
+}
+
+struct Dog;
+struct Robot {
+    model: u32,
+}
+
+impl Describe for Dog {
+    fn name(&self) -> String {
+        "강아지".into()
+    }
+}
+
+impl Describe for Robot {
+    fn name(&self) -> String {
+        format!("로봇 R-{}", self.model)
+    }
+    fn describe(&self) -> String {
+        format!("삐빅. {} 가동 중", self.name())
+    }
+}
+
+struct Money(i64);
+impl fmt::Display for Money {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "₩{}", self.0)
+    }
+}
+
+fn largest<T: PartialOrd + Copy>(list: &[T]) -> T {
+    let mut max = list[0];
+    for &x in list {
+        if x > max {
+            max = x;
+        }
+    }
+    max
+}
+
+fn main() {
+    let things: Vec<Box<dyn Describe>> = vec![Box::new(Dog), Box::new(Robot { model: 7 })];
+    for t in &things {
+        println!("{}", t.describe());
+    }
+    println!("{}", Money(15000));
+    println!("{} {}", largest(&[3, 9, 2]), largest(&['a', 'z', 'm']));
+
+    let nums = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    let even_squares: Vec<i32> = nums.iter().filter(|&&n| n % 2 == 0).map(|n| n * n).collect();
+    let total: i32 = nums.iter().sum();
+    println!("{:?} 합={}", even_squares, total);
+
+    let names = ["길동", "영희", "철수"];
+    let scores = [88, 95, 72];
+    for (i, (n, s)) in names.iter().zip(scores.iter()).enumerate() {
+        println!("{}. {n}: {s}", i + 1);
+    }
+
+    let threshold = 80;
+    let passed: Vec<_> = names.iter().zip(scores).filter(|(_, s)| *s >= threshold).map(|(n, _)| *n).collect();
+    println!("합격: {:?}", passed);
+}
+--- exercise
+`trait Area { fn area(&self) -> f64; }` 를 정의하고 `Circle`, `Square` 구조체에 구현하세요. 제네릭 함수 `fn total_area<T: Area>(shapes: &[T]) -> f64` 와, 서로 다른 타입을 섞기 위한 `Vec<Box<dyn Area>>` 버전의 합계도 계산해 보세요.
+--- solution
+trait Area {
+    fn area(&self) -> f64;
+}
+
+struct Circle(f64);
+struct Square(f64);
+
+impl Area for Circle {
+    fn area(&self) -> f64 { std::f64::consts::PI * self.0 * self.0 }
+}
+impl Area for Square {
+    fn area(&self) -> f64 { self.0 * self.0 }
+}
+
+fn total_area<T: Area>(shapes: &[T]) -> f64 {
+    shapes.iter().map(|s| s.area()).sum()
+}
+
+fn main() {
+    println!("{}", total_area(&[Square(1.0), Square(2.0)])); // 5
+    let mixed: Vec<Box<dyn Area>> = vec![Box::new(Circle(1.0)), Box::new(Square(3.0))];
+    let sum: f64 = mixed.iter().map(|s| s.area()).sum();
+    println!("{sum:.2}"); // 12.14
+}
+--- quiz
+? 서로 다른 구조체 타입을 하나의 Vec에 담아 같은 트레이트 메서드를 호출하려면?
+- `Vec<T>` 제네릭 사용
++ `Vec<Box<dyn Trait>>` 트레이트 객체 사용
+- `Vec<Any>` 사용
+- 불가능하다
+! 제네릭 Vec<T>는 한 가지 타입만 담을 수 있습니다.
+? Rust 반복자 체인 `iter().map().filter()` 의 특징은?
++ collect나 sum 같은 소비 메서드가 호출될 때까지 실행되지 않는 지연 평가
+- 각 단계마다 새 Vec을 할당한다
+- 항상 병렬로 실행된다
+- 일반 for 루프보다 수십 배 느리다
+! 컴파일러가 최적화하여 루프와 동등한 성능을 냅니다(제로 비용 추상화).
+
+=== 고급 | lifetimes-smart | 라이프타임과 스마트 포인터
+## 라이프타임
+참조가 **얼마나 오래 유효한지**를 나타내는 컴파일러의 개념입니다. 대부분 자동 추론(생략 규칙)되지만, 함수가 여러 참조를 받아 참조를 반환할 때는 명시가 필요할 수 있습니다.
+`fn longest<'a>(x: &'a str, y: &'a str) -> &'a str` — "반환값은 x, y 중 더 짧게 사는 것만큼 유효하다"는 뜻. 라이프타임은 수명을 바꾸지 않고 **관계를 설명**할 뿐입니다.
+
+## 스마트 포인터
+- `Box<T>`: 힙 할당, 단일 소유. 재귀 타입(트리, 리스트)에 필수
+- `Rc<T>`: 참조 카운트로 **여러 소유자** (싱글 스레드)
+- `Arc<T>`: 원자적 참조 카운트 (멀티 스레드)
+- `RefCell<T>`: 빌림 규칙을 **런타임에** 검사 → 불변 참조를 통해서도 내부 수정(내부 가변성)
+- 자주 쓰는 조합: `Rc<RefCell<T>>`(싱글 스레드 공유 가변), `Arc<Mutex<T>>`(멀티 스레드 공유 가변)
+--- code
+use std::cell::RefCell;
+use std::rc::Rc;
+
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    if x.len() >= y.len() { x } else { y }
+}
+
+struct Excerpt<'a> {
+    part: &'a str, // 구조체가 참조를 가지면 라이프타임 명시 필요
+}
+
+#[derive(Debug)]
+enum List {
+    Cons(i32, Box<List>), // Box 없이는 크기를 알 수 없는 재귀 타입
+    Nil,
+}
+use List::{Cons, Nil};
+
+fn sum_list(l: &List) -> i32 {
+    match l {
+        Cons(v, rest) => v + sum_list(rest),
+        Nil => 0,
+    }
+}
+
+#[derive(Debug)]
+struct Account {
+    balance: i32,
+}
+
+fn main() {
+    let a = String::from("긴 문자열입니다");
+    let result;
+    {
+        let b = String::from("짧음");
+        result = longest(&a, &b);
+        println!("더 긴 것: {result}");
+    }
+    // println!("{result}"); // ❌ b가 이미 해제되어 result가 유효하지 않을 수 있음
+
+    let novel = String::from("첫 문장. 두 번째 문장.");
+    let ex = Excerpt { part: novel.split('.').next().unwrap() };
+    println!("발췌: {}", ex.part);
+
+    let list = Cons(1, Box::new(Cons(2, Box::new(Cons(3, Box::new(Nil))))));
+    println!("리스트 합: {}", sum_list(&list));
+
+    let shared = Rc::new(RefCell::new(Account { balance: 100 }));
+    let owner1 = Rc::clone(&shared);
+    let owner2 = Rc::clone(&shared);
+    owner1.borrow_mut().balance += 50;
+    owner2.borrow_mut().balance -= 30;
+    println!("{:?}, 소유자 수 = {}", shared.borrow(), Rc::strong_count(&shared)); // 120, 3
+}
+--- exercise
+이진 트리 노드 `struct Node { value: i32, left: Option<Box<Node>>, right: Option<Box<Node>> }` 를 정의하고, 트리의 모든 값의 합을 구하는 재귀 메서드 `fn sum(&self) -> i32` 와 깊이를 구하는 `fn depth(&self) -> usize` 를 작성하세요.
+--- solution
+struct Node {
+    value: i32,
+    left: Option<Box<Node>>,
+    right: Option<Box<Node>>,
+}
+
+impl Node {
+    fn leaf(value: i32) -> Option<Box<Node>> {
+        Some(Box::new(Node { value, left: None, right: None }))
+    }
+    fn sum(&self) -> i32 {
+        self.value
+            + self.left.as_ref().map_or(0, |n| n.sum())
+            + self.right.as_ref().map_or(0, |n| n.sum())
+    }
+    fn depth(&self) -> usize {
+        let l = self.left.as_ref().map_or(0, |n| n.depth());
+        let r = self.right.as_ref().map_or(0, |n| n.depth());
+        1 + l.max(r)
+    }
+}
+
+fn main() {
+    let tree = Node {
+        value: 1,
+        left: Some(Box::new(Node { value: 2, left: Node::leaf(4), right: None })),
+        right: Node::leaf(3),
+    };
+    println!("합={} 깊이={}", tree.sum(), tree.depth()); // 합=10 깊이=3
+}
+--- quiz
+? 라이프타임 표기 `'a` 의 역할은?
+- 참조의 수명을 연장한다
++ 여러 참조의 수명 사이의 관계를 컴파일러에게 설명한다
+- 메모리를 수동으로 해제한다
+- 런타임에 수명을 검사한다
+! 라이프타임은 실제 수명을 바꾸지 않으며 빌림 검사기가 안전성을 확인하는 데 쓰입니다.
+? 싱글 스레드에서 여러 소유자가 공유하면서 내용도 수정해야 할 때 적합한 조합은?
+- `Box<T>`
++ `Rc<RefCell<T>>`
+- `Arc<T>`
+- `&mut T` 여러 개
+! 멀티 스레드라면 Arc<Mutex<T>>를 사용합니다.
+
+=== 고급 | concurrency | 두려움 없는 동시성
+Rust의 소유권과 타입 시스템은 **데이터 경쟁을 컴파일 시점에 막아 줍니다**. 이를 "두려움 없는 동시성(fearless concurrency)"이라고 부릅니다.
+
+## 도구
+- `std::thread::spawn(move || { ... })` — `move` 클로저로 소유권을 스레드에 넘김
+- `std::thread::scope` — 지역 변수를 안전하게 빌려 쓰는 스코프 스레드
+- 채널 `std::sync::mpsc` — 메시지 전달 (다중 생산자, 단일 소비자)
+- `Arc<Mutex<T>>` — 공유 상태. `lock()` 이 반환하는 가드가 스코프를 벗어나면 자동 해제
+- `Send`(스레드 간 이동 가능), `Sync`(스레드 간 공유 가능) 마커 트레이트를 컴파일러가 자동 검사 — `Rc` 를 스레드에 넘기려 하면 컴파일 오류
+
+## async
+`async fn` / `.await` 로 비동기 I/O를 작성하며, 실행기(런타임)로 **tokio** 크레이트를 가장 많이 씁니다. 웹 프레임워크 axum, actix-web 등이 이를 기반으로 합니다.
+
+## 데이터 병렬
+`rayon` 크레이트를 쓰면 `iter()` 를 `par_iter()` 로 바꾸는 것만으로 병렬 처리가 됩니다.
+--- code
+use std::sync::mpsc;
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    // 1) 스레드 생성과 join
+    let handles: Vec<_> = (1..=3)
+        .map(|id| {
+            thread::spawn(move || {
+                thread::sleep(Duration::from_millis(30 * id));
+                id * id
+            })
+        })
+        .collect();
+    let results: Vec<u64> = handles.into_iter().map(|h| h.join().unwrap()).collect();
+    println!("결과: {:?}", results); // [1, 4, 9]
+
+    // 2) 채널로 메시지 전달
+    let (tx, rx) = mpsc::channel();
+    for id in 0..3 {
+        let tx = tx.clone();
+        thread::spawn(move || {
+            tx.send(format!("작업자 {id} 완료")).unwrap();
+        });
+    }
+    drop(tx); // 원본 송신자를 닫아야 수신 루프가 끝남
+    for msg in rx {
+        println!("{msg}");
+    }
+
+    // 3) 공유 상태: Arc<Mutex<T>>
+    let counter = Arc::new(Mutex::new(0));
+    let mut hs = vec![];
+    for _ in 0..8 {
+        let c = Arc::clone(&counter);
+        hs.push(thread::spawn(move || {
+            for _ in 0..1000 {
+                *c.lock().unwrap() += 1;
+            }
+        }));
+    }
+    for h in hs {
+        h.join().unwrap();
+    }
+    println!("counter = {}", *counter.lock().unwrap()); // 항상 8000
+
+    // 4) 스코프 스레드: 지역 데이터를 빌려서 병렬 처리
+    let data = vec![1, 2, 3, 4, 5, 6, 7, 8];
+    let (left, right) = data.split_at(data.len() / 2);
+    let (a, b) = thread::scope(|s| {
+        let h1 = s.spawn(|| left.iter().sum::<i32>());
+        let h2 = s.spawn(|| right.iter().sum::<i32>());
+        (h1.join().unwrap(), h2.join().unwrap())
+    });
+    println!("부분합 {a} + {b} = {}", a + b); // 10 + 26 = 36
+}
+--- exercise
+1부터 1,000,000까지의 수를 4개의 스레드가 나누어 합을 구하고(각자 25만 개), 채널(`mpsc`)로 부분합을 보내 main에서 최종 합계(500000500000, `u64`)를 출력하세요.
+--- solution
+use std::sync::mpsc;
+use std::thread;
+
+fn main() {
+    let (tx, rx) = mpsc::channel::<u64>();
+    let chunk = 250_000u64;
+    for t in 0..4u64 {
+        let tx = tx.clone();
+        thread::spawn(move || {
+            let start = t * chunk + 1;
+            let end = (t + 1) * chunk;
+            let partial: u64 = (start..=end).sum();
+            tx.send(partial).unwrap();
+        });
+    }
+    drop(tx);
+    let total: u64 = rx.iter().sum();
+    println!("{total}"); // 500000500000
+}
+--- quiz
+? `thread::spawn(move || ...)` 에서 `move` 가 필요한 이유는?
++ 스레드가 main보다 오래 살 수 있으므로 캡처한 값의 소유권을 클로저로 옮겨야 하기 때문
+- 스레드를 더 빠르게 실행하기 위해
+- 클로저를 재사용하기 위해
+- 문법상 장식일 뿐
+! 소유권 이동 없이 참조만 캡처하면 댕글링 참조 위험이 있어 컴파일러가 거부합니다.
+? 여러 스레드에서 `Rc<T>` 를 공유하려고 하면?
+- 정상 동작한다
++ Rc는 Send가 아니므로 컴파일 오류가 난다
+- 런타임 패닉이 발생한다
+- 자동으로 Arc로 바뀐다
+! 스레드 간 공유에는 원자적 참조 카운트를 쓰는 Arc를 사용해야 합니다.
