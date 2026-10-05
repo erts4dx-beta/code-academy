@@ -748,3 +748,136 @@ tar -tzf "$archive" | sort
 - cron으로 매일 삭제
 - /tmp는 자동 삭제되므로 필요 없음
 ! 마지막 줄의 rm은 중간에 오류로 종료되면 실행되지 않습니다.
+
+=== 고급 | processes | 프로세스와 병렬 처리: 백그라운드 작업, wait, 서브셸
+셸에서 실행하는 명령은 하나하나가 **프로세스**입니다. 오래 걸리는 작업 여러 개를 동시에 돌리면 전체 시간을 크게 줄일 수 있고, 프로세스가 언제 새로 만들어지는지 알면 "변수 값이 왜 사라졌지?" 같은 함정도 피할 수 있습니다.
+
+## 백그라운드 실행과 wait
+- `명령 &`: 명령을 백그라운드에서 실행하고 곧바로 다음 줄로 진행
+- `$!`: 마지막으로 백그라운드에서 실행한 프로세스의 PID (`$$` 는 현재 셸 자신의 PID)
+- `wait`: 모든 백그라운드 작업이 끝날 때까지 대기
+- `wait "$pid"`: 특정 작업을 기다리고 **그 작업의 종료 코드**를 그대로 돌려줌
+- `wait -n` (Bash 4.3+): 아무 작업이나 하나가 끝날 때까지 대기 → 동시 실행 개수 제한에 활용
+- `jobs -rp`: 실행 중인 작업의 PID 목록 (줄 수를 세면 현재 동시 실행 개수)
+- `jobs`, `fg`, `bg`: 대화형 터미널에서 작업 목록 확인과 전환
+
+## 서브셸과 프로세스 치환
+- `( 명령들 )`: **서브셸**(자식 프로세스)에서 실행. 안에서 바꾼 변수나 `cd` 는 밖에 영향을 주지 않음
+- `{ 명령들; }`: 현재 셸에서 묶어서 실행 (닫는 `}` 앞의 `;` 와 `{` 뒤 공백 필수)
+- 파이프 `a | b` 의 각 부분도 서브셸에서 실행됩니다 → `... | while read` 안에서 바꾼 변수는 루프가 끝나면 사라짐
+- 프로세스 치환 `<(명령)`: 명령의 출력을 **파일처럼** 넘김. `done < <(명령)` 으로 위 함정을 피하고, `diff <(sort a.txt) <(sort b.txt)` 처럼 두 출력을 비교할 때도 씀
+
+## 병렬 처리와 시그널
+- `xargs -P 4 -n 1 명령`: 입력 항목마다 명령을 실행하되 최대 4개까지 동시에
+- `kill -TERM "$pid"`: 프로세스에 종료 신호를 보냄. 시그널로 끝난 프로세스의 종료 코드는 **128 + 시그널 번호** (SIGTERM은 15 → 143)
+- `timeout 5 명령`: 5초 안에 끝나지 않으면 강제 종료 (이때 종료 코드 124)
+
+> macOS의 기본 `/bin/bash` 는 3.2 버전이라 `wait -n` 을 지원하지 않습니다. Homebrew로 최신 Bash를 설치하거나 Linux/WSL에서 실습하세요.
+--- code
+#!/usr/bin/env bash
+set -euo pipefail
+
+# 1) & 로 동시에 실행하고 wait 로 모두 기다리기
+task() {                       # $1: 이름, $2: 걸리는 시간(초)
+  sleep "$2"
+  echo "완료: $1 (${2}초)"
+}
+task 다운로드 0.6 &
+task 압축 0.4 &
+task 업로드 0.2 &
+wait                           # 동시에 돌기 때문에 약 0.6초 만에 셋 다 끝남
+echo "== 모든 작업 완료 (짧은 작업부터 끝남)"
+
+# 2) $! 로 PID를 모아 두었다가 작업별 종료 코드 확인
+is_even() { sleep 0.1; (( $1 % 2 == 0 )); }
+nums=(4 7 10)
+pids=()
+for n in "${nums[@]}"; do
+  is_even "$n" &
+  pids+=("$!")
+done
+for i in "${!nums[@]}"; do
+  if wait "${pids[$i]}"; then
+    echo "${nums[$i]}: 짝수"
+  else
+    echo "${nums[$i]}: 홀수 (종료 코드 $?)"
+  fi
+done
+
+# 3) 서브셸 안에서 바꾼 값은 밖으로 나오지 않음
+city="서울"
+( city="부산"; echo "서브셸 안: $city" )
+echo "서브셸 밖: $city"
+
+# 파이프 + while 의 함정과 해결
+total=0
+printf "1\n2\n3\n" | while read -r n; do total=$(( total + n )); done
+echo "파이프 뒤 total: $total"           # 0 (서브셸에서만 더해짐)
+total=0
+while read -r n; do total=$(( total + n )); done < <(printf "1\n2\n3\n")
+echo "프로세스 치환 total: $total"       # 6
+
+# 4) 프로세스 치환으로 두 명령의 출력 비교
+diff <(printf "사과\n배\n포도\n") <(printf "사과\n바나나\n포도\n") || echo "(차이 있음: diff 종료 코드 $?)"
+
+# 5) xargs -P: 최대 3개씩 병렬로 제곱 계산 (끝나는 순서가 섞이므로 sort)
+printf "%s\n" 1 2 3 4 5 6 | xargs -P 3 -n 1 bash -c 'sleep 0.1; echo $(( $1 * $1 ))' _ | sort -n | paste -sd ' '
+
+# 6) 시그널과 timeout
+sleep 30 &
+pid=$!
+kill -TERM "$pid"
+wait "$pid" || echo "sleep이 SIGTERM으로 종료됨 (종료 코드 $?)"   # 128 + 15
+timeout 0.3 sleep 5 || echo "timeout으로 중단됨 (종료 코드 $?)"
+--- exercise
+작업 이름 목록 `names=(alpha beta xray gamma delta box)` 를 **최대 3개씩만 동시에** 처리하는 스크립트를 작성하세요. 각 작업은 0.2초가 걸리고(`sleep 0.2`), 이름에 `x` 가 들어가면 실패(종료 코드 1)한다고 가정합니다. `wait -n` 으로 동시 실행 개수를 제한하고, 작업마다 결과를 임시 디렉터리의 파일에 남긴 뒤 모든 작업이 끝나면 **입력 순서대로** 결과와 실패한 작업 수를 출력하세요. 임시 디렉터리는 `trap` 으로 정리합니다.
+--- solution
+#!/usr/bin/env bash
+set -euo pipefail
+
+MAX_JOBS=3
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+
+do_job() {                       # 실제로는 다운로드, 이미지 변환 등
+  local name=$1
+  sleep 0.2
+  if [[ $name == *x* ]]; then
+    echo "$name: 실패" > "$work/$name"
+    return 1
+  fi
+  echo "$name: 성공" > "$work/$name"
+}
+
+names=(alpha beta xray gamma delta box)
+for name in "${names[@]}"; do
+  # 실행 중인 작업이 MAX_JOBS개면, 하나가 끝날 때까지 기다린 뒤 다음 작업 시작
+  while (( $(jobs -rp | wc -l) >= MAX_JOBS )); do
+    wait -n || true              # 실패한 작업도 결과 파일로 집계하므로 여기선 무시
+  done
+  do_job "$name" &
+done
+wait                             # 남은 작업 모두 대기
+
+failed=0
+for name in "${names[@]}"; do
+  result=$(< "$work/$name")
+  echo "$result"
+  if [[ $result == *실패 ]]; then
+    failed=$(( failed + 1 ))
+  fi
+done
+echo "실패한 작업: ${failed}개"
+--- quiz
+? 마지막으로 백그라운드(&)에서 실행한 프로세스의 PID가 담기는 특수 변수는?
+- `$$`
+- `$?`
++ `$!`
+- `$#`
+! `$$` 는 현재 셸 자신의 PID, `$?` 는 직전 명령의 종료 코드, `$#` 은 인자 개수입니다.
+? `total=0; printf "1\n2\n" | while read -r n; do total=$(( total + n )); done; echo "$total"` 의 출력이 0인 이유는?
++ 파이프의 각 부분이 서브셸에서 실행되어, 루프 안에서 바꾼 total이 부모 셸에 반영되지 않기 때문
+- `read` 가 숫자를 읽지 못하기 때문
+- `$(( ))` 안에서는 변수를 바꿀 수 없기 때문
+- `while` 루프의 변수는 항상 지역 변수이기 때문
+! `done < <(printf ...)` 처럼 프로세스 치환으로 입력을 넣으면 루프가 현재 셸에서 실행되어 3이 출력됩니다.
