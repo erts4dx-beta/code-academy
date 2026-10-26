@@ -24,8 +24,55 @@
 
   /* ---------- UI 조각 ---------- */
   function toast(msg) { var t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('show'); }, 2600); }
-  function stars(n) { var s = ''; for (var i = 1; i <= 5; i++) s += i <= n ? '★' : '<span class="off">★</span>'; return '<span class="stars" title="난이도 ' + n + '/5">' + s + '</span>'; }
+  function stars(n, kind) {
+    var s = ''; for (var i = 1; i <= 5; i++) s += i <= n ? '<span class="on">★</span>' : (i - 0.5 <= n ? '<span class="half">★</span>' : '<span class="off">★</span>');
+    var lab = (kind === 'imp' ? '트렌드 중요도 ' : '난이도 ') + n + '/5';
+    return '<span class="stars' + (kind === 'imp' ? ' imp' : '') + '" role="img" aria-label="' + lab + '" title="' + lab + '">' + s + '</span>';
+  }
   var DIFF = ['', '매우 쉬움', '쉬움', '보통', '어려움', '매우 어려움'];
+  /* ---------- 난이도 ↔ 트렌드 중요도 토글 ---------- */
+  var TR = CA.trends || null;
+  var trendOn = !!(TR && store.get('ca-trend', false));
+  function trendStars(L) { return TR && TR.stars[L.id] != null ? TR.stars[L.id] : null; }
+  function fmtStar(n) { return (n % 1 ? n.toFixed(1) : String(n)); }
+  /* where: 'card' | 'hero' */
+  function ratingInner(L, where) {
+    var t = trendOn ? trendStars(L) : null;
+    if (t != null) {
+      return stars(t, 'imp') + (where === 'hero'
+        ? '<span class="rating-label">트렌드 중요도: ' + fmtStar(t) + '/5 (' + TR.levelName(t) + ')</span>'
+        : ' <small class="rating-label imp">트렌드 중요도 ' + fmtStar(t) + '</small>');
+    }
+    return stars(L.difficulty) + (where === 'hero' ? '<span class="rating-label">난이도: ' + DIFF[L.difficulty] + '</span>' : ' <small class="rating-label muted">난이도 · ' + DIFF[L.difficulty] + '</small>');
+  }
+  function rating(L, where) { return '<span class="rating" data-lang="' + L.id + '" data-where="' + where + '">' + ratingInner(L, where) + '</span>'; }
+  function trendReason(L) { return trendOn && TR && TR.reasons[L.id] ? '📈 ' + esc(TR.reasons[L.id]) + ' <small class="muted">(' + esc(TR.asOf) + ')</small>' : ''; }
+  function trendInfo() {
+    if (!TR) return '';
+    var ids = Object.keys(TR.stars).filter(function (id) { return CA.byId[id]; }).sort(function (a, b) { return TR.score[b] - TR.score[a]; });
+    return '<details class="trend-info"><summary aria-label="트렌드 중요도 근거 보기">ⓘ 근거</summary><div class="trend-pop">' +
+      '<b>트렌드 중요도란?</b><p>지금 업계에서 배울 가치가 얼마나 큰지(별이 많을수록 중요)를 공개 데이터로 계산한 점수입니다. <b>' + esc(TR.asOf) + '</b></p>' +
+      '<p class="muted">계산: 각 지표를 13개 언어 안의 순위 백분위로 바꾼 뒤 가중 평균 → 1위 대비 비율로 1~5점(0.5 단위). 가중치: ' +
+      TR.weights.map(function (w) { return esc(w.label) + ' ' + Math.round(w.w * 100) + '%'; }).join(' · ') + '. 자료가 없는 지표는 빼고 나머지로 계산합니다.</p>' +
+      '<ul class="trend-list">' + ids.map(function (id) { var L = CA.byId[id]; return '<li><span class="tl-name">' + esc(L.name) + '</span>' + stars(TR.stars[id], 'imp') + '<span class="tl-why">' + esc(TR.reasons[id] || '') + '</span></li>'; }).join('') + '</ul>' +
+      '<b>출처</b><ul class="trend-src">' + TR.sources.map(function (s) { return '<li><a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.name) + '</a> <span class="muted">· ' + esc(s.date) + '</span></li>'; }).join('') + '</ul>' +
+      '<p class="muted" style="margin:6px 0 0">설문·검색·채용 지표는 표본과 지역(채용 자료는 미국)에 따라 편향이 있을 수 있으니 참고용으로 활용하세요.</p></div></details>';
+  }
+  function trendBar() {
+    if (!TR) return '';
+    return '<div class="trend-bar"><button type="button" class="trend-toggle" aria-pressed="' + trendOn + '" title="별점을 학습 난이도 ↔ 현재 트렌드 기준 중요도로 전환">' +
+      '<span class="tt-box" aria-hidden="true">' + (trendOn ? '✓' : '') + '</span>트렌드 중요도</button>' +
+      '<span class="trend-now muted">' + (trendOn ? '별점 = 트렌드 중요도 (' + esc(TR.asOf) + ')' : '별점 = 학습 난이도') + '</span>' + trendInfo() + '</div>';
+  }
+  function setTrend(on) {
+    trendOn = !!on && !!TR; store.set('ca-trend', trendOn);
+    $$('.rating').forEach(function (el) { var L = CA.byId[el.getAttribute('data-lang')]; if (L) el.innerHTML = ratingInner(L, el.getAttribute('data-where')); });
+    $$('.trend-reason').forEach(function (el) { var L = CA.byId[el.getAttribute('data-lang')]; el.innerHTML = L ? trendReason(L) : ''; el.hidden = !trendOn; });
+    $$('.trend-toggle').forEach(function (b) { b.setAttribute('aria-pressed', String(trendOn)); $('.tt-box', b).textContent = trendOn ? '✓' : ''; });
+    $$('.trend-now').forEach(function (el) { el.textContent = trendOn ? '별점 = 트렌드 중요도 (' + TR.asOf + ')' : '별점 = 학습 난이도'; });
+    $$('.rating-desc').forEach(function (el) { el.textContent = trendOn ? '카드의 별은 현재 트렌드 기준 중요도(1~5, 많을수록 중요)입니다.' : '카드의 별은 학습 난이도(1~5)입니다.'; });
+  }
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('.trend-toggle'); if (b) setTrend(!trendOn); });
   function badge(L) { return '<span class="badge" style="--lc:' + L.color + ';background:' + L.color + '">' + esc(L.badge) + '</span>'; }
   function bar(p) { return '<div class="progress"><span style="width:' + p + '%"></span></div>'; }
   function lv(level) { return '<span class="pill lv-' + level + '">' + level + '</span>'; }
@@ -45,7 +92,7 @@
   function langCard(L) {
     var p = langProg(L);
     return '<a class="lang-card" href="#/lang/' + L.id + '" style="--lc:' + L.color + '" data-cat="' + esc(L.category) + '">' +
-      '<div class="lang-head">' + badge(L) + '<div><h3>' + esc(L.name) + '</h3>' + stars(L.difficulty) + ' <small class="muted">' + DIFF[L.difficulty] + '</small></div></div>' +
+      '<div class="lang-head">' + badge(L) + '<div><h3>' + esc(L.name) + '</h3>' + rating(L, 'card') + '</div></div>' +
       '<p>' + esc(L.desc) + '</p><div class="tags">' + L.uses.slice(0, 4).map(function (u) { return '<span class="tag">' + esc(u) + '</span>'; }).join('') + '</div>' +
       '<div class="card-foot"><span>' + L.lessons.length + '개 레슨</span>' + bar(p.pct) + '<span>' + p.pct + '%</span></div></a>';
   }
@@ -80,7 +127,7 @@
       '<div class="stats"><div class="stat"><b>' + CA.languages.length + '</b><span>프로그래밍 언어</span></div><div class="stat"><b>' + TOTAL + '</b><span>단계별 레슨</span></div>' +
       '<div class="stat"><b>' + QUIZ_TOTAL + '</b><span>퀴즈 문항</span></div><div class="stat"><b>' + doneCount() + '</b><span>내가 완료한 레슨</span></div></div>' +
       cont +
-      '<div class="section-title"><h2>언어 선택</h2><a href="#/roadmap">무엇부터 배울지 모르겠다면? 로드맵 →</a></div>' + langGrid('homeGrid') +
+      '<div class="section-title"><h2>언어 선택</h2><a href="#/roadmap">무엇부터 배울지 모르겠다면? 로드맵 →</a></div>' + trendBar() + langGrid('homeGrid') +
       '<div class="section-title"><h2>이렇게 배웁니다</h2></div><div class="features">' +
       [['📚', '4단계 커리큘럼', '입문 → 초급 → 중급 → 고급으로 이어지는 체계적인 순서'], ['💻', '예제 코드', '구문 강조와 복사 버튼, JavaScript는 바로 실행까지'], ['✍️', '실습 과제', '직접 풀어 보고 정답을 펼쳐 비교하기'], ['✅', '즉시 채점 퀴즈', '핵심 개념을 퀴즈로 확인, 통과하면 자동 완료'],
         ['📈', '진도 추적', '완료한 레슨과 언어별 진행률이 브라우저에 저장'], ['🔎', '전체 검색', '모든 언어의 레슨을 한 번에 검색 ( / 키)'], ['🌗', '다크 모드', '눈이 편한 테마로 언제든 전환'], ['📱', '모바일 지원', '휴대폰에서도 편하게 학습']].map(function (f) { return '<div class="feature"><div class="ico">' + f[0] + '</div><b>' + f[1] + '</b><span>' + f[2] + '</span></div>'; }).join('') +
@@ -90,7 +137,7 @@
   }
 
   function renderLanguages() {
-    app.innerHTML = '<div class="container"><h1>전체 언어</h1><p class="muted">관심 분야로 필터링하세요. 카드의 별은 학습 난이도(1~5)입니다.</p>' + langGrid('allGrid') + '</div>';
+    app.innerHTML = '<div class="container"><h1>전체 언어</h1><p class="muted">관심 분야로 필터링하세요. <span class="rating-desc">' + (trendOn ? '카드의 별은 현재 트렌드 기준 중요도(1~5, 많을수록 중요)입니다.' : '카드의 별은 학습 난이도(1~5)입니다.') + '</span></p>' + trendBar() + langGrid('allGrid') + '</div>';
     bindGrid('allGrid');
     return '전체 언어';
   }
@@ -103,8 +150,9 @@
     var idx = 0;
     app.innerHTML = '<div class="container"><div class="crumbs"><a href="#/">홈</a>›<a href="#/languages">언어</a>›<span>' + esc(L.name) + '</span></div>' +
       '<section class="lang-hero" style="--lc:' + L.color + ';margin-top:12px">' + badge(L) + '<div style="flex:1"><h1>' + esc(L.name) + '</h1><p>' + esc(L.desc) + '</p>' +
-      '<div class="lesson-meta">' + stars(L.difficulty) + '<span>난이도: ' + DIFF[L.difficulty] + '</span>' + (L.year ? '<span>· 등장: ' + esc(L.year) + '</span>' : '') + '<span>· ' + L.lessons.length + '개 레슨</span></div>' +
-      '<div class="tags">' + L.uses.map(function (u) { return '<span class="tag">' + esc(u) + '</span>'; }).join('') + '</div></div></section>' +
+      '<div class="lesson-meta">' + rating(L, 'hero') + (L.year ? '<span>· 등장: ' + esc(L.year) + '</span>' : '') + '<span>· ' + L.lessons.length + '개 레슨</span></div>' +
+      '<p class="trend-reason" data-lang="' + L.id + '"' + (trendOn ? '' : ' hidden') + '>' + trendReason(L) + '</p>' +
+      '<div class="tags">' + L.uses.map(function (u) { return '<span class="tag">' + esc(u) + '</span>'; }).join('') + '</div>' + trendBar() + '</div></section>' +
       '<div class="complete-bar" style="border-style:solid"><div style="flex:1;min-width:220px"><b>내 진행률 ' + p.done + ' / ' + p.total + ' (' + p.pct + '%)</b>' + bar(p.pct) + '</div>' +
       '<a class="btn primary" href="#/lang/' + L.id + '/' + next.id + '">' + (p.done ? '이어서 학습 →' : '첫 레슨 시작 →') + '</a></div>' +
       '<div class="section-title"><h2>단계별 커리큘럼</h2></div><div class="curriculum">' +
