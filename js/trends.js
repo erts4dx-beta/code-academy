@@ -6,55 +6,58 @@
  *   가중 평균(자료가 없는 신호는 제외 후 가중치 재정규화) → 1위 언어 점수 대비 비율로 1~5점 환산, 0.5 단위 반올림.
  */
 CA.trends = {
-  asOf: '2026년 10월 기준',
-  updated: '2026-10-26',
+  asOf: '2026년 11월 기준',
+  updated: '2026-11-02',
   sources: [
     { id: 'soUsed', name: 'Stack Overflow 개발자 설문 2026 — 사용 언어', date: '2026-10-06 발표 (응답 14,099명)', url: 'https://survey.stackoverflow.co/2026/technology/data/languages' },
     { id: 'soDA', name: 'Stack Overflow 개발자 설문 2026 — 희망(Desired)·존중(Admired)', date: '2026-10-06 발표', url: 'https://survey.stackoverflow.co/2026/technology/data/da-language' },
     { id: 'soPrev', name: 'Stack Overflow 개발자 설문 2025 — 사용 언어 (전년 대비 변화 계산용)', date: '2025년 발표', url: 'https://survey.stackoverflow.co/2025/technology' },
     { id: 'tiobe', name: 'TIOBE Index 2026년 10월', date: '2026-10 (월간)', url: 'https://www.tiobe.com/tiobe-index/' },
     { id: 'jobs', name: 'Oxylabs·Coresignal 미국 채용공고 80만+ 건 분석', date: '2026-05-28 발표 (2025.1~2026.3 공고)', url: 'https://oxylabs.io/press-area/most-in-demand-programming-languages' },
-    { id: 'octo', name: 'GitHub Octoverse 2025', date: '2025-10-28 발표 (2024.8~2025.8 데이터)', url: 'https://github.blog/news-insights/octoverse/octoverse-a-new-developer-joins-github-every-second-as-ai-leads-typescript-to-1/' }
+    { id: 'octo', name: 'GitHub Octoverse 2026', date: '2026-10-28 발표 (2025.10~2026.9 데이터)', url: 'https://github.blog/news-insights/octoverse/octoverse-commits-pushes-reach-new-highs-in-2026-as-developers-build-with-agents/' },
+    { id: 'octoPrev', name: 'GitHub Octoverse 2025 (2026 보고서에 언급 없는 언어의 보조 신호)', date: '2025-10-28 발표', url: 'https://github.blog/news-insights/octoverse/octoverse-a-new-developer-joins-github-every-second-as-ai-leads-typescript-to-1/' }
   ],
   /* 신호 정의와 가중치(합계 1). key 는 signals 의 필드명 */
   weights: [
     { key: 'jobs', w: 0.25, label: '채용공고 언급 비율(%)' },
     { key: 'used', w: 0.20, label: 'SO 2026 사용률(%)' },
     { key: 'desired', w: 0.15, label: 'SO 2026 희망률(%)' },
-    { key: 'octo', w: 0.15, label: 'GitHub Octoverse 2025 성장 등급(0~1)' },
+    { key: 'octo', w: 0.15, label: 'GitHub Octoverse 2026 성장 등급(0~1)' },
     { key: 'tiobe', w: 0.10, label: 'TIOBE 2026.10 점유율(%)' },
     { key: 'momentum', w: 0.10, label: 'SO 사용률 전년 대비 변화(%p)' },
     { key: 'admired', w: 0.05, label: 'SO 2026 존중도(%)' }
   ],
-  /* octo 등급: 1.0 = 기여자 수·성장 최상위(TypeScript 1위 +66%, Python 2위 +48%), 0.8 = 3위, 0.6 = 성장 상위 5 (Java·C#),
-     0.5 = 신규 저장소 핵심 6개 언어(C++), 0.4 = 보조 신호(셸 스크립트 AI 저장소 +324%, CSS 신규 기여자 유입), 0.2 = 별도 언급 없음, null = 집계 대상 아님
+  /* octo 등급 (Octoverse 2026 기준): 1.0 = 기여자 수 1·2위이자 증가 폭 최대(TypeScript +362만, Python +323만),
+     0.8 = 기여자 수 3위(JavaScript +182만) 또는 상위 언어 중 성장률 1위(Rust, 1년 새 2배),
+     0.5 = 상위 10위 언어지만 성장·AI 활용 하위 그룹(Java·C#·C++, 2025년엔 Java·C# 성장 상위 5로 0.6),
+     0.4 = 2026 보고서엔 언급 없고 2025 보조 신호만 있음(셸 스크립트 AI 저장소 +324%, CSS 신규 기여자 유입), 0.2 = 별도 언급 없음, null = 집계 대상 아님
      jobs: 상위 10위 밖(<5%)은 3 으로 처리, HTML/CSS 는 분석 제외(null). tiobe: Bash 는 51~100위(<0.25%)라 0.2 로 처리, HTML/CSS 는 미집계(null) */
   signals: {
     python:     { used: 58.0, desired: 33.4, admired: 50.6, momentum: 0.1,  tiobe: 19.23, jobs: 46,   octo: 1.0 },
     javascript: { used: 62.0, desired: 27.8, admired: 42.0, momentum: -4.0, tiobe: 2.77,  jobs: 19,   octo: 0.8 },
     typescript: { used: 43.8, desired: 27.5, admired: 53.0, momentum: 0.2,  tiobe: 0.41,  jobs: 8,    octo: 1.0 },
     htmlcss:    { used: 58.2, desired: 29.0, admired: 47.8, momentum: -3.7, tiobe: null,  jobs: null, octo: 0.4 },
-    java:       { used: 27.6, desired: 13.1, admired: 38.5, momentum: -1.8, tiobe: 8.41,  jobs: 21,   octo: 0.6 },
+    java:       { used: 27.6, desired: 13.1, admired: 38.5, momentum: -1.8, tiobe: 8.41,  jobs: 21,   octo: 0.5 },
     c:          { used: 21.8, desired: 14.2, admired: 45.9, momentum: -0.2, tiobe: 11.33, jobs: 3,    octo: 0.2 },
     cpp:        { used: 24.3, desired: 15.8, admired: 45.8, momentum: 0.8,  tiobe: 8.87,  jobs: 11,   octo: 0.5 },
-    csharp:     { used: 27.1, desired: 16.5, admired: 50.0, momentum: -0.7, tiobe: 3.79,  jobs: 9,    octo: 0.6 },
+    csharp:     { used: 27.1, desired: 16.5, admired: 50.0, momentum: -0.7, tiobe: 3.79,  jobs: 9,    octo: 0.5 },
     go:         { used: 16.5, desired: 17.7, admired: 49.5, momentum: 0.1,  tiobe: 1.39,  jobs: 5,    octo: 0.2 },
-    rust:       { used: 18.0, desired: 26.3, admired: 67.4, momentum: 3.1,  tiobe: 1.44,  jobs: 3,    octo: 0.2 },
+    rust:       { used: 18.0, desired: 26.3, admired: 67.4, momentum: 3.1,  tiobe: 1.44,  jobs: 3,    octo: 0.8 },
     php:        { used: 17.7, desired: 7.6,  admired: 35.7, momentum: -1.1, tiobe: 1.26,  jobs: 3,    octo: 0.2 },
     sql:        { used: 58.4, desired: 32.0, admired: 51.4, momentum: -0.2, tiobe: 1.97,  jobs: 45,   octo: null },
     bash:       { used: 51.3, desired: 25.8, admired: 48.1, momentum: 2.6,  tiobe: 0.2,   jobs: 11,   octo: 0.4 }
   },
   reasons: {
-    python: 'SO 희망률 1위(33%)·TIOBE 1위(19.2%)·채용공고 46%로 1위 — AI·데이터 시대의 핵심 언어',
+    python: 'SO 희망률 1위(33%)·TIOBE 1위(19.2%)·채용공고 46%로 1위·GitHub 기여자 2위(+323만) — AI·데이터 시대의 핵심 언어',
     sql: '채용공고 45%로 Python과 거의 동률, SO 사용률 58%·희망률 2위 — 거의 모든 직군의 필수 동반 기술',
     javascript: 'SO 사용률 1위(62%)·채용 19% — 웹의 필수 언어지만 신규 프로젝트는 TypeScript로 이동 중(사용률 −4%p)',
     htmlcss: 'SO 사용률 58%·희망률 29% — 웹의 기본기 (채용·TIOBE 통계는 마크업이라 집계 제외)',
-    typescript: 'GitHub 기여자 수 1위(2025.8, +66%)·존중도 53% — 다만 채용공고 비중 8%, TIOBE 38위로 아직 격차',
-    bash: 'SO 사용률 51%(+2.6%p)·채용 11%·AI 저장소 셸 스크립트 +324% — 자동화·DevOps 기본기',
-    java: 'TIOBE 4위·채용공고 21%(3위) — 엔터프라이즈 백엔드 수요는 꾸준하나 희망률은 낮음(13%)',
+    typescript: 'GitHub 기여자 수 1위 유지(2026, 1년 새 +362만 명)·존중도 53% — 다만 채용공고 비중 8%, TIOBE 38위로 아직 격차',
+    bash: 'SO 사용률 51%(+2.6%p)·채용 11%·AI 저장소 셸 스크립트 +324%(Octoverse 2025) — 자동화·DevOps 기본기',
+    java: 'TIOBE 4위·채용공고 21%(3위) — 엔터프라이즈 백엔드 수요는 꾸준하나 희망률 13%, GitHub 성장은 하위 그룹(2026)',
     cpp: 'TIOBE 3위·채용 11%·사용률 +0.8%p — 게임·AI 추론·임베디드의 성능 핵심',
-    csharp: 'TIOBE 5위·채용 9%·GitHub 성장 5위(+22%) — .NET·Unity 생태계가 견조',
-    rust: 'SO 존중도 1위(67%)·사용률 +3.1%p로 가장 가파른 성장, TIOBE 10위 — 채용 규모는 아직 작음(<5%)',
+    csharp: 'TIOBE 5위·채용 9% — .NET·Unity 생태계가 견조하나 GitHub 성장은 TypeScript·Python·Rust보다 완만(2026)',
+    rust: 'SO 존중도 1위(67%)·사용률 +3.1%p·GitHub 기여자 1년 새 2배(상위 언어 중 성장률 1위, 2026)·TIOBE 10위 — 채용 규모는 아직 작음(<5%)',
     c: 'TIOBE 2위(11.3%)지만 채용공고 비중 3%·희망률 14% — 시스템·임베디드 기초 지식으로서 가치',
     go: 'SO 존중도 50%이나 TIOBE 11위(전년 8위)·채용 5% — 클라우드·인프라 분야 특화 수요',
     php: 'SO 희망률 7.6%·존중도 36%로 최하위권, TIOBE 12위 — 기존 웹(WordPress·Laravel) 유지보수 중심'

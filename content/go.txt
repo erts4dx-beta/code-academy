@@ -804,6 +804,186 @@ func main() {
 - 비동기로 큐에 쌓인다
 ! 버퍼 없는 채널은 송신자와 수신자를 동기화합니다.
 
+=== 중급 | context | context: 취소와 타임아웃 전파
+고루틴은 만들기 쉽지만, **멈추게 하는 방법**이 없으면 쓸모없어진 작업이 계속 돌면서 메모리와 연결을 붙잡습니다(고루틴 누수). 표준 라이브러리의 `context` 패키지는 "이 작업은 이제 그만해도 된다"는 신호와 마감 시간을 함수 호출 사슬 전체에 전달하는 표준 방법입니다. `net/http`, `database/sql` 등 거의 모든 I/O 라이브러리가 `context.Context` 를 받습니다.
+
+## context 만들기
+- `context.Background()`: 최상위(루트) context. `main`, 테스트, 서버 시작 지점에서 사용
+- `context.WithCancel(parent)`: `cancel()` 을 호출하면 취소되는 자식 context
+- `context.WithTimeout(parent, d)` / `context.WithDeadline(parent, t)`: 시간이 지나면 자동으로 취소
+- `context.WithValue(parent, key, val)`: 요청 ID처럼 **요청 범위의 메타데이터**만 담습니다. 함수 인자를 대신하는 용도로 쓰지 마세요.
+
+## 취소 신호 받기
+- `ctx.Done()`: 취소되면 닫히는 채널. `select` 에서 다른 채널과 함께 기다립니다.
+- `ctx.Err()`: 취소 이유. 직접 취소하면 `context.Canceled`, 시간 초과면 `context.DeadlineExceeded`
+- 에러를 `%w` 로 감싸 올려도 `errors.Is(err, context.DeadlineExceeded)` 로 확인할 수 있습니다.
+
+## 지켜야 할 규칙
+- context는 **함수의 첫 번째 인자** `ctx context.Context` 로 전달하고, 구조체 필드에 저장하지 않습니다.
+- `WithCancel`/`WithTimeout` 이 돌려준 `cancel` 은 작업이 일찍 끝나도 **반드시 호출**합니다. 보통 만들자마자 `defer cancel()` 을 씁니다. (`go vet` 이 빠뜨린 cancel을 경고합니다.)
+- 취소는 **부모 → 자식** 방향으로만 전파됩니다. 부모를 취소하면 파생된 모든 자식이 함께 취소되지만, 자식을 취소해도 부모는 그대로입니다.
+- 채널로 값을 보내는 고루틴은 `select` 로 `ctx.Done()` 도 함께 기다려야, 받는 쪽이 사라졌을 때 영원히 막히지 않습니다.
+--- code
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"sync"
+	"time"
+)
+
+// 오래 걸리는 작업: 끝나기 전에 ctx가 취소되면 즉시 중단한다
+func slowWork(ctx context.Context, name string, d time.Duration) (string, error) {
+	select {
+	case <-time.After(d):
+		return name + " 완료", nil
+	case <-ctx.Done():
+		return "", fmt.Errorf("%s 중단: %w", name, ctx.Err())
+	}
+}
+
+// 1, 2, 3, ... 을 끝없이 보내는 생성기. ctx가 취소되면 고루틴이 종료된다(누수 방지)
+func counter(ctx context.Context) <-chan int {
+	ch := make(chan int)
+	go func() {
+		defer close(ch)
+		for i := 1; ; i++ {
+			select {
+			case ch <- i:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	return ch
+}
+
+func main() {
+	// 1) 타임아웃: 전체 작업에 100ms 예산
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	if r, err := slowWork(ctx, "빠른 작업", 10*time.Millisecond); err == nil {
+		fmt.Println(r)
+	}
+	_, err := slowWork(ctx, "느린 작업", time.Second)
+	fmt.Println(err)
+	fmt.Println("타임아웃인가?", errors.Is(err, context.DeadlineExceeded))
+
+	// 2) 직접 취소: 필요한 만큼만 받고 생성기 멈추기
+	ctx2, cancel2 := context.WithCancel(context.Background())
+	sum := 0
+	for n := range counter(ctx2) {
+		sum += n
+		if n == 10 {
+			break
+		}
+	}
+	cancel2() // 이 호출이 없으면 생성기 고루틴이 영원히 남는다
+	fmt.Println("1~10 합:", sum)
+
+	// 3) 부모를 취소하면 자식 context도 모두 취소된다
+	parent, cancelParent := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
+	for id := 1; id <= 3; id++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			child, cancelChild := context.WithTimeout(parent, 5*time.Second)
+			defer cancelChild()
+			<-child.Done() // 5초를 기다리지 않고 부모 취소 즉시 깨어난다
+			fmt.Printf("작업자 %d 종료: %v\n", id, child.Err())
+		}(id)
+	}
+	time.Sleep(20 * time.Millisecond)
+	cancelParent()
+	wg.Wait() // 출력 순서는 실행할 때마다 다를 수 있다
+	fmt.Println("모든 작업자 정리 완료")
+}
+--- exercise
+여러 서버에 같은 요청을 동시에 보내고 **가장 먼저 온 응답 하나만** 사용하는 `fastest(ctx, servers)` 함수를 작성하세요. 응답을 받으면 나머지 요청은 즉시 취소해야 하고, 바깥 ctx의 타임아웃이 먼저 끝나면 그 에러를 반환해야 합니다. 각 서버 요청은 `time.After(지연)` 과 `ctx.Done()` 을 `select` 로 기다리는 `fetch` 함수로 흉내 내세요. (서울 30ms, 도쿄 80ms, 버지니아 150ms로, 전체 타임아웃 200ms일 때와 20ms일 때를 각각 확인)
+--- solution
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+)
+
+type server struct {
+	name  string
+	delay time.Duration
+}
+
+func fetch(ctx context.Context, s server) (string, error) {
+	select {
+	case <-time.After(s.delay):
+		return s.name + " 응답", nil
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+}
+
+func fastest(ctx context.Context, servers []server) (string, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel() // 반환하는 순간 아직 진행 중인 요청을 모두 취소
+
+	ch := make(chan string, len(servers)) // 버퍼: 늦게 끝난 고루틴이 막히지 않게
+	for _, s := range servers {
+		go func(s server) {
+			if r, err := fetch(ctx, s); err == nil {
+				ch <- r
+			}
+		}(s)
+	}
+	select {
+	case r := <-ch:
+		return r, nil
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+}
+
+func main() {
+	servers := []server{
+		{"서울", 30 * time.Millisecond},
+		{"도쿄", 80 * time.Millisecond},
+		{"버지니아", 150 * time.Millisecond},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+	r, err := fastest(ctx, servers)
+	fmt.Println("결과:", r, "에러:", err) // 결과: 서울 응답 에러: <nil>
+
+	ctx2, cancel2 := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel2()
+	_, err = fastest(ctx2, servers)
+	fmt.Println("에러:", err, "/ 타임아웃:", errors.Is(err, context.DeadlineExceeded)) // 에러: context deadline exceeded / 타임아웃: true
+}
+--- quiz
+? `context.WithTimeout` 이 돌려준 `cancel` 함수는 언제 호출해야 하나요?
+- 타임아웃이 발생했을 때만
++ 작업이 일찍 끝나도 항상 호출한다 (보통 `defer cancel()`)
+- 호출하지 않아도 가비지 컬렉터가 알아서 정리한다
+- 자식 context를 새로 만들 때만
+! 호출하지 않으면 타이머와 부모-자식 연결이 마감 시간까지 남아 리소스가 낭비됩니다. `go vet` 도 이를 경고합니다.
+? 부모 context를 취소하면 어떻게 되나요?
++ 그 부모에서 파생된 모든 자식 context도 함께 취소된다
+- 자식 context는 영향을 받지 않는다
+- 프로그램이 패닉으로 종료된다
+- 가장 최근에 만든 자식 하나만 취소된다
+! 취소는 트리를 따라 아래로 전파됩니다. 반대로 자식을 취소해도 부모는 영향을 받지 않습니다.
+? 에러가 시간 초과 때문인지 확인하는 올바른 방법은?
+- `err.Error() == "timeout"`
++ `errors.Is(err, context.DeadlineExceeded)`
+- `err == nil`
+- `ctx.Value("timeout") != nil`
+! `%w` 로 감싼 에러도 `errors.Is` 로 검사할 수 있습니다. 직접 `cancel()` 해서 끝났다면 `context.Canceled` 입니다.
+
 === 고급 | http-server | 표준 라이브러리로 웹 서버 만들기
 Go의 표준 라이브러리 `net/http` 만으로 **프로덕션급 HTTP 서버**를 만들 수 있습니다. 각 요청은 자동으로 별도 고루틴에서 처리됩니다.
 
